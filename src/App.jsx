@@ -623,6 +623,9 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
             <div className="header-badge">F3 NATION</div>
             <h1>Q <span>PLANNER</span></h1>
             <div className="header-sub">Beatdown Builder · Weinke Generator · Pre-Blast Creator</div>
+            <div style={{marginTop:6,fontSize:11,color:'#666',fontFamily:'Barlow, sans-serif',letterSpacing:'0.5px'}}>
+              v{__APP_VERSION__} · build {__BUILD_TIME__.slice(0, 10)}
+            </div>
           </div>
         </div>
 
