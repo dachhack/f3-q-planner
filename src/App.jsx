@@ -583,7 +583,7 @@ const STYLES = `
 
 export default function F3QPlanner() {
   const [form, setForm] = useState({
-    q: "", ao: "", location: "", date: "", time: "5:15 AM",
+    q: "", ao: "", region: "", location: "", date: "", time: "5:15 AM",
     theme: "", equipment: [], terrain: [], formats: [], duration: "45"
   });
   const [loading, setLoading] = useState(false);
@@ -592,7 +592,43 @@ export default function F3QPlanner() {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(null);
   const [formCollapsed, setFormCollapsed] = useState(false);
+  const [exicon, setExicon] = useState([]);
+  const [regions, setRegions] = useState([]);
+  const [aos, setAos] = useState([]);
   const outputRef = useRef(null);
+
+  // Load Exicon exercise database + regions/AOs on mount
+  useEffect(() => {
+    fetch("/exicon.json")
+      .then(r => r.json())
+      .then(data => setExicon(data))
+      .catch(() => {});
+    fetch("https://f3-nation-production.up.railway.app/map/regions")
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setRegions(data.sort((a, b) => (a.name || "").localeCompare(b.name || "")));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Load AOs when region changes
+  useEffect(() => {
+    if (!form.region) { setAos([]); return; }
+    const regionObj = regions.find(r => String(r.id) === form.region || r.name === form.region);
+    if (!regionObj) return;
+    fetch(`https://f3-nation-production.up.railway.app/map/events-and-locations?regionId=${regionObj.id}`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const unique = [...new Map(data.map(d => [d.locationName || d.name, d])).values()]
+            .sort((a, b) => (a.locationName || a.name || "").localeCompare(b.locationName || b.name || ""));
+          setAos(unique);
+        }
+      })
+      .catch(() => {});
+  }, [form.region, regions]);
 
   const equipment = ["Coupons / Blocks", "Bodyweight", "Resistance Bands", "Sandbags"];
   const terrains  = ["Hill", "Open Field", "Parking Lot", "Track", "Flat Only"];
@@ -605,10 +641,30 @@ export default function F3QPlanner() {
       [key]: f[key].includes(val) ? f[key].filter(v => v !== val) : [...f[key], val]
     }));
 
-  const buildPrompt = () => `
-Design a themed F3 beatdown with these specs:
+  const buildPrompt = () => {
+    // Pick a relevant subset of exicon exercises to include as context
+    const relevantTags = [];
+    if (form.equipment.some(e => e.toLowerCase().includes("coupon") || e.toLowerCase().includes("block"))) relevantTags.push("Coupon");
+    if (form.equipment.some(e => e.toLowerCase().includes("bodyweight"))) relevantTags.push("Full Body");
+    if (form.terrain.some(t => t.toLowerCase().includes("hill"))) relevantTags.push("Run", "Cardio");
+
+    let exercisePool = exicon;
+    if (relevantTags.length > 0) {
+      const tagged = exicon.filter(e => e.tags.some(t => relevantTags.includes(t)));
+      const untagged = exicon.filter(e => e.tags.length === 0);
+      exercisePool = [...tagged, ...untagged.slice(0, 50)];
+    }
+    // Limit to ~150 exercise names to keep prompt reasonable
+    const exerciseNames = exercisePool.slice(0, 150).map(e => e.name).join(", ");
+
+    const aoObj = aos.find(a => (a.locationName || a.name) === form.ao);
+    const locationStr = aoObj
+      ? `${form.ao} at ${aoObj.locationAddress || aoObj.fullAddress || form.location || ""}`.trim()
+      : `${form.ao || "Unnamed AO"}${form.location ? ` at ${form.location}` : ""}`;
+
+    return `Design a themed F3 beatdown with these specs:
 - Q: ${form.q || "Q"}
-- AO: ${form.ao || "Unnamed AO"}${form.location ? ` at ${form.location}` : ""}
+- AO: ${locationStr}
 - Date: ${form.date || "TBD"}, Time: ${form.time}
 - Duration: ${form.duration} minutes
 - Theme direction: ${form.theme || "surprise me — pick something bold and memorable"}
@@ -617,7 +673,11 @@ Design a themed F3 beatdown with these specs:
 - Workout formats to include: ${form.formats.length ? form.formats.join(", ") : "Q's choice — pick what fits the theme"}
 - Extra notes: ${form.notes || "none"}
 
+Use REAL F3 exercise names from the Exicon when possible. Here are exercises to draw from:
+${exerciseNames}
+
 Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and hard-hitting anthems. Sequence to match the energy arc — warmup through finisher.`;
+  };
 
   const generate = async () => {
     setFormCollapsed(true);
@@ -707,7 +767,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                 <div className="form-toggle-title">BEATDOWN SETUP</div>
                 {formCollapsed && (form.q || form.ao || form.theme) && (
                   <div className="form-toggle-summary">
-                    {[form.q, form.ao, form.theme, form.duration + " min"].filter(Boolean).join(" · ")}
+                    {[form.q, form.ao, regions.find(r => String(r.id) === form.region)?.name, form.theme, form.duration + " min"].filter(Boolean).join(" · ")}
                   </div>
                 )}
               </div>
@@ -720,12 +780,37 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                   <input className="form-input" placeholder="Your F3 name" value={form.q} onChange={e => setForm(f => ({...f, q: e.target.value}))} />
                 </div>
                 <div className="form-group">
+                  <label className="form-label">Region</label>
+                  {regions.length > 0 ? (
+                    <select className="form-select" value={form.region} onChange={e => setForm(f => ({...f, region: e.target.value, ao: "", location: ""}))}>
+                      <option value="">Select a region...</option>
+                      {regions.map(r => (
+                        <option key={r.id} value={String(r.id)}>{r.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input className="form-input" placeholder="e.g. F3 Alpha" value={form.region} onChange={e => setForm(f => ({...f, region: e.target.value}))} />
+                  )}
+                </div>
+                <div className="form-group">
                   <label className="form-label">AO Name</label>
-                  <input className="form-input" placeholder="e.g. Badapple" value={form.ao} onChange={e => setForm(f => ({...f, ao: e.target.value}))} />
+                  {aos.length > 0 ? (
+                    <select className="form-select" value={form.ao} onChange={e => {
+                      const sel = aos.find(a => (a.locationName || a.name) === e.target.value);
+                      setForm(f => ({...f, ao: e.target.value, location: sel?.locationAddress || sel?.fullAddress || ""}));
+                    }}>
+                      <option value="">Select an AO...</option>
+                      {aos.map(a => (
+                        <option key={a.id || a.name} value={a.locationName || a.name}>{a.locationName || a.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input className="form-input" placeholder="e.g. Badapple" value={form.ao} onChange={e => setForm(f => ({...f, ao: e.target.value}))} />
+                  )}
                 </div>
                 <div className="form-group">
                   <label className="form-label">Location</label>
-                  <input className="form-input" placeholder="e.g. Sweetapple Park" value={form.location} onChange={e => setForm(f => ({...f, location: e.target.value}))} />
+                  <input className="form-input" placeholder={form.ao && aos.length ? "Auto-filled from AO" : "e.g. Sweetapple Park"} value={form.location} onChange={e => setForm(f => ({...f, location: e.target.value}))} />
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
                   <div className="form-group">
