@@ -566,12 +566,37 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: buildPrompt() })
       });
-      const data = await res.json();
-      const text = data.content.map(b => b.text || "").join("");
-      const clean = text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
-      setResult(parsed);
-      setActiveTab("weinke");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const msg = JSON.parse(line);
+            if (msg.type === 'error') {
+              setError(msg.error || "Something went wrong generating the beatdown.");
+              setLoading(false);
+              return;
+            }
+            if (msg.type === 'done') {
+              const clean = msg.text.replace(/```json|```/g, "").trim();
+              const parsed = JSON.parse(clean);
+              setResult(parsed);
+              setActiveTab("weinke");
+            }
+          } catch (_) {
+            // skip unparseable lines
+          }
+        }
+      }
     } catch (e) {
       setError("Something went wrong generating the beatdown. Try again.");
     } finally {

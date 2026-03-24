@@ -80,18 +80,77 @@ export default async function handler(req) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 4000,
+        stream: true,
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: prompt }]
       })
     });
 
-    const data = await response.json();
+    if (!response.ok) {
+      const errText = await response.text();
+      return new Response(JSON.stringify({ type: 'error', error: errText }), {
+        status: response.status,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
 
-    return new Response(JSON.stringify(data), {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+    let lastProgressAt = 0;
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        const send = (obj) => {
+          controller.enqueue(new TextEncoder().encode(JSON.stringify(obj) + '\n'));
+        };
+
+        try {
+          let buffer = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
+
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const data = line.slice(6).trim();
+              if (data === '[DONE]') continue;
+
+              try {
+                const event = JSON.parse(data);
+                if (event.type === 'content_block_delta' && event.delta?.text) {
+                  fullText += event.delta.text;
+                  // Send progress heartbeat every 500 chars
+                  if (fullText.length - lastProgressAt >= 500) {
+                    send({ type: 'progress', chars: fullText.length });
+                    lastProgressAt = fullText.length;
+                  }
+                }
+              } catch (_) {
+                // skip unparseable SSE lines
+              }
+            }
+          }
+
+          send({ type: 'done', text: fullText });
+        } catch (err) {
+          send({ type: 'error', error: err.message });
+        } finally {
+          controller.close();
+        }
+      }
+    });
+
+    return new Response(stream, {
       status: 200,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'text/plain; charset=utf-8',
         'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache',
       }
     });
   } catch (err) {
