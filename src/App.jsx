@@ -522,49 +522,6 @@ const STYLES = `
   .pace-time { font-family: 'Barlow Condensed', sans-serif; color: var(--red); font-weight: 700; letter-spacing: 1px; }
 `;
 
-RULES:
-- IC = In Cadence (everyone together, counted). Group IC exercises back-to-back.
-- OYO = On Your Own (individual pace)
-- Coupon = heavy block/brick
-- PAX = participants
-- Q = the workout leader
-- Weinke = workout plan
-- COT = Circle of Trust (closing)
-- Always group IC exercises together — never break them up with OYO exercises
-- Keep beatdowns to 45 minutes
-- Theme every block with a creative name that ties to the overall theme
-
-Return ONLY valid JSON in this exact structure:
-{
-  "theme": "string",
-  "tagline": "string (one punchy sentence)",
-  "blocks": [
-    {
-      "time": "0:00",
-      "name": "Block name",
-      "themeLabel": "Thematic subtitle",
-      "duration": "5 min",
-      "exercises": [
-        { "name": "Exercise name", "reps": "15 IC", "note": "optional coaching note", "cadence": "IC" or "OYO" }
-      ]
-    }
-  ],
-  "paceGuide": [
-    { "segment": "Segment name", "time": "0:00 – 5:00" }
-  ],
-  "closingMessages": {
-    "faith": "Faith-based closing message (2-3 sentences)",
-    "secular": "Secular/motivational closing message (2-3 sentences)",
-    "themed": "Theme-specific closing message tied to the beatdown (2-3 sentences)"
-  },
-  "playlist": [
-    { "section": "Block name", "tracks": [
-      { "title": "Song title", "artist": "Artist name", "duration": "3:45" }
-    ]}
-  ],
-  "preBlast": "Full social media pre-blast post. Tease theme and vibe only — NO exercise names, rep counts, or block details. End with logistics."
-}`;
-
 export default function F3QPlanner() {
   const [form, setForm] = useState({
     q: "", ao: "", location: "", date: "", time: "5:15 AM",
