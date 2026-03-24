@@ -11,8 +11,10 @@ RULES:
 - Weinke = workout plan
 - COT = Circle of Trust (closing)
 - Always group IC exercises together — never break them up with OYO exercises
-- Keep beatdowns to the specified duration
 - Theme every block with a creative name that ties to the overall theme
+- FILL THE ENTIRE DURATION with exercises — no rest breaks, no water breaks, no programmed pauses. Every minute should be accounted for with work.
+- COT happens AFTER the workout duration is over — do not include it in the timed blocks. It is separate.
+- The LAST exercise block must include 2-3 bonus/alternate exercises marked with note "FLEX — drop or add to adjust for time". This gives the Q flexibility to run long or short.
 
 Return ONLY valid JSON in this exact structure:
 {
