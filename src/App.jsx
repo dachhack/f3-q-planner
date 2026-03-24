@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:ital,wght@0,400;0,600;1,400&display=swap');
@@ -65,14 +65,68 @@ const STYLES = `
   }
 
   /* ── LAYOUT ── */
-  .main { display: grid; grid-template-columns: 380px 1fr; min-height: calc(100vh - 100px); }
+  .main { max-width: 900px; margin: 0 auto; padding: 0 20px; }
 
-  /* ── SIDEBAR ── */
-  .sidebar {
+  /* ── FORM ── */
+  .form-panel {
     background: var(--panel);
-    border-right: 1px solid var(--border);
-    padding: 32px 28px;
-    overflow-y: auto;
+    border: 1px solid var(--border);
+    margin-top: 24px;
+    overflow: hidden;
+    transition: margin 0.3s;
+  }
+  .form-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.02);
+    border: none;
+    width: 100%;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .form-toggle:hover { background: rgba(255,255,255,0.04); }
+  .form-toggle-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 4px;
+    color: var(--gold);
+  }
+  .form-toggle-summary {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .form-toggle-arrow {
+    font-size: 18px;
+    color: var(--gold);
+    transition: transform 0.3s;
+  }
+  .form-toggle-arrow.collapsed { transform: rotate(-90deg); }
+  .form-body {
+    max-height: 2000px;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.4s ease;
+    padding: 24px 28px;
+  }
+  .form-body.collapsed {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 24px;
+  }
+  .form-grid .full-width { grid-column: 1 / -1; }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
   }
   .section-label {
     font-family: 'Bebas Neue', sans-serif;
@@ -173,8 +227,7 @@ const STYLES = `
 
   /* ── OUTPUT ── */
   .output {
-    padding: 32px 40px;
-    overflow-y: auto;
+    padding: 24px 0;
   }
   .empty-state {
     display: flex;
@@ -520,6 +573,12 @@ const STYLES = `
   }
   .pace-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
   .pace-time { font-family: 'Barlow Condensed', sans-serif; color: var(--red); font-weight: 700; letter-spacing: 1px; }
+
+  @media (max-width: 700px) {
+    .cot-options { grid-template-columns: 1fr; }
+    .weinke-header { flex-direction: column; gap: 16px; }
+    .weinke-meta { flex-wrap: wrap; }
+  }
 `;
 
 export default function F3QPlanner() {
@@ -532,6 +591,8 @@ export default function F3QPlanner() {
   const [activeTab, setActiveTab] = useState("weinke");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(null);
+  const [formCollapsed, setFormCollapsed] = useState(false);
+  const outputRef = useRef(null);
 
   const equipment = ["Coupons / Blocks", "Bodyweight", "Resistance Bands", "Sandbags"];
   const terrains  = ["Hill", "Open Field", "Parking Lot", "Track", "Flat Only"];
@@ -557,6 +618,7 @@ Design a themed F3 beatdown with these specs:
 Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and hard-hitting anthems. Sequence to match the energy arc — warmup through finisher.`;
 
   const generate = async () => {
+    setFormCollapsed(true);
     setLoading(true);
     setError(null);
     setResult(null);
@@ -611,6 +673,12 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
     setTimeout(() => setCopied(false), 2000);
   };
 
+  useEffect(() => {
+    if ((result || loading) && outputRef.current) {
+      outputRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [result, loading]);
+
   const allTracks = result?.playlist?.flatMap(s => s.tracks.map(t => ({ ...t, section: s.section }))) || [];
 
   return (
@@ -630,79 +698,92 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
         </div>
 
         <div className="main">
-          {/* Sidebar */}
-          <div className="sidebar">
-            <div className="section-label">Q Info</div>
-            <div className="form-group">
-              <label className="form-label">Q Name</label>
-              <input className="form-input" placeholder="Your F3 name" value={form.q} onChange={e => setForm(f => ({...f, q: e.target.value}))} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">AO Name</label>
-              <input className="form-input" placeholder="e.g. Badapple" value={form.ao} onChange={e => setForm(f => ({...f, ao: e.target.value}))} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Location</label>
-              <input className="form-input" placeholder="e.g. Sweetapple Park" value={form.location} onChange={e => setForm(f => ({...f, location: e.target.value}))} />
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-              <div className="form-group">
-                <label className="form-label">Date</label>
-                <input className="form-input" type="date" value={form.date} onChange={e => setForm(f => ({...f, date: e.target.value}))} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Start Time</label>
-                <input className="form-input" placeholder="5:15 AM" value={form.time} onChange={e => setForm(f => ({...f, time: e.target.value}))} />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Duration (minutes)</label>
-              <input className="form-input" type="number" min="15" max="90" step="5" value={form.duration} onChange={e => setForm(f => ({...f, duration: e.target.value}))} />
-            </div>
-
-            <div className="section-label" style={{marginTop:8}}>Beatdown</div>
-            <div className="form-group">
-              <label className="form-label">Theme Direction</label>
-              <div className="chips">
-                {themes.map(t => (
-                  <div key={t} className={`chip ${form.theme === t ? "active" : ""}`}
-                    onClick={() => setForm(f => ({...f, theme: f.theme === t ? "" : t}))}>
-                    {t}
+          {/* Collapsible Form */}
+          <div className="form-panel">
+            <button className="form-toggle" onClick={() => setFormCollapsed(c => !c)}>
+              <div>
+                <div className="form-toggle-title">BEATDOWN SETUP</div>
+                {formCollapsed && (form.q || form.ao || form.theme) && (
+                  <div className="form-toggle-summary">
+                    {[form.q, form.ao, form.theme, form.duration + " min"].filter(Boolean).join(" · ")}
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Equipment</label>
-              <div className="chips">
-                {equipment.map(e => (
-                  <div key={e} className={`chip ${form.equipment.includes(e) ? "active" : ""}`}
-                    onClick={() => toggleChip("equipment", e)}>{e}</div>
-                ))}
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Terrain</label>
-              <div className="chips">
-                {terrains.map(t => (
-                  <div key={t} className={`chip ${form.terrain.includes(t) ? "active" : ""}`}
-                    onClick={() => toggleChip("terrain", t)}>{t}</div>
-                ))}
-              </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Notes / Special Requests</label>
-              <textarea className="form-textarea" placeholder="e.g. heavy on partner work, avoid burpees, mental health theme..." value={form.notes || ""} onChange={e => setForm(f => ({...f, notes: e.target.value}))} />
-            </div>
-
-            <button className="btn-generate" onClick={generate} disabled={loading}>
-              {loading ? "GENERATING..." : "⚡ GENERATE BEATDOWN"}
+              <div className={`form-toggle-arrow ${formCollapsed ? "collapsed" : ""}`}>▼</div>
             </button>
+            <div className={`form-body ${formCollapsed ? "collapsed" : ""}`}>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label className="form-label">Q Name</label>
+                  <input className="form-input" placeholder="Your F3 name" value={form.q} onChange={e => setForm(f => ({...f, q: e.target.value}))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">AO Name</label>
+                  <input className="form-input" placeholder="e.g. Badapple" value={form.ao} onChange={e => setForm(f => ({...f, ao: e.target.value}))} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Location</label>
+                  <input className="form-input" placeholder="e.g. Sweetapple Park" value={form.location} onChange={e => setForm(f => ({...f, location: e.target.value}))} />
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                  <div className="form-group">
+                    <label className="form-label">Date</label>
+                    <input className="form-input" type="date" value={form.date} onChange={e => setForm(f => ({...f, date: e.target.value}))} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Start Time</label>
+                    <input className="form-input" placeholder="5:15 AM" value={form.time} onChange={e => setForm(f => ({...f, time: e.target.value}))} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Duration (minutes)</label>
+                  <input className="form-input" type="number" min="15" max="90" step="5" value={form.duration} onChange={e => setForm(f => ({...f, duration: e.target.value}))} />
+                </div>
+
+                <div className="form-group full-width">
+                  <label className="form-label">Theme Direction</label>
+                  <div className="chips">
+                    {themes.map(t => (
+                      <div key={t} className={`chip ${form.theme === t ? "active" : ""}`}
+                        onClick={() => setForm(f => ({...f, theme: f.theme === t ? "" : t}))}>
+                        {t}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="form-group full-width">
+                  <label className="form-label">Equipment</label>
+                  <div className="chips">
+                    {equipment.map(e => (
+                      <div key={e} className={`chip ${form.equipment.includes(e) ? "active" : ""}`}
+                        onClick={() => toggleChip("equipment", e)}>{e}</div>
+                    ))}
+                  </div>
+                </div>
+                <div className="form-group full-width">
+                  <label className="form-label">Terrain</label>
+                  <div className="chips">
+                    {terrains.map(t => (
+                      <div key={t} className={`chip ${form.terrain.includes(t) ? "active" : ""}`}
+                        onClick={() => toggleChip("terrain", t)}>{t}</div>
+                    ))}
+                  </div>
+                </div>
+                <div className="form-group full-width">
+                  <label className="form-label">Notes / Special Requests</label>
+                  <textarea className="form-textarea" placeholder="e.g. heavy on partner work, avoid burpees, mental health theme..." value={form.notes || ""} onChange={e => setForm(f => ({...f, notes: e.target.value}))} />
+                </div>
+                <div className="full-width">
+                  <button className="btn-generate" onClick={generate} disabled={loading}>
+                    {loading ? "GENERATING..." : "GENERATE BEATDOWN"}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Output */}
-          <div className="output">
+          <div className="output" ref={outputRef}>
             {!result && !loading && !error && (
               <div className="empty-state">
                 <div className="empty-icon">🪖</div>
@@ -828,7 +909,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                 {/* PLAYLIST TAB */}
                 {activeTab === "playlist" && (
                   <div className="playlist-section">
-                    <div className="section-label">45-Min Playlist · Men in their 40s &amp; 50s</div>
+                    <div className="section-label">{form.duration}-Min Playlist · Men in their 40s &amp; 50s</div>
                     <div className="playlist-grid">
                       {result.playlist?.map((section, si) => (
                         <>
