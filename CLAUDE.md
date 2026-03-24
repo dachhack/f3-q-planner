@@ -24,7 +24,7 @@ A web app for F3 Q leaders to generate beatdown plans (workouts), Weinkes, playl
 
 ### Workout design
 - Always group IC exercises back-to-back — never split them up with OYO exercises
-- Beatdowns are 45 minutes
+- Beatdown duration is configurable (default 45 minutes)
 - Every block gets a themed name tied to the overall beatdown theme
 - Warmup always comes first, COT always comes last
 
@@ -40,7 +40,7 @@ A web app for F3 Q leaders to generate beatdown plans (workouts), Weinkes, playl
   3. Themed to the beatdown
 
 ### Playlist
-- Every beatdown package includes a 45-min playlist
+- Every beatdown package includes a playlist matched to the workout duration
 - Sequenced to match the workout arc (warmup → main blocks → finisher)
 - Built for men in their 40s & 50s — classic rock, 90s hip-hop, hard-hitting anthems
 

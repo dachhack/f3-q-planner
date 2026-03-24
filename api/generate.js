@@ -11,7 +11,7 @@ RULES:
 - Weinke = workout plan
 - COT = Circle of Trust (closing)
 - Always group IC exercises together — never break them up with OYO exercises
-- Keep beatdowns to 45 minutes
+- Keep beatdowns to the specified duration
 - Theme every block with a creative name that ties to the overall theme
 
 Return ONLY valid JSON in this exact structure:

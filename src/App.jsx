@@ -653,6 +653,11 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
               </div>
             </div>
 
+            <div className="form-group">
+              <label className="form-label">Duration (minutes)</label>
+              <input className="form-input" type="number" min="15" max="90" step="5" value={form.duration} onChange={e => setForm(f => ({...f, duration: e.target.value}))} />
+            </div>
+
             <div className="section-label" style={{marginTop:8}}>Beatdown</div>
             <div className="form-group">
               <label className="form-label">Theme Direction</label>
