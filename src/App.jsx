@@ -604,14 +604,20 @@ export default function F3QPlanner() {
       .then(data => setExicon(data))
       .catch(() => {});
     fetch("https://api.f3nation.com/map/location/regions")
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(data => {
         const list = Array.isArray(data) ? data : data?.regions;
-        if (Array.isArray(list)) {
+        if (Array.isArray(list) && list.length > 0) {
           setRegions(list.sort((a, b) => (a.name || "").localeCompare(b.name || "")));
-        }
+        } else throw new Error();
       })
-      .catch(() => {});
+      .catch(() => {
+        // Fallback to bundled static regions list
+        fetch("/regions.json")
+          .then(r => r.json())
+          .then(data => setRegions(data.sort((a, b) => (a.name || "").localeCompare(b.name || ""))))
+          .catch(() => {});
+      });
   }, []);
 
   // Load AOs when region changes
