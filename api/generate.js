@@ -16,6 +16,17 @@ RULES:
 - COT happens AFTER the workout duration is over — do not include it in the timed blocks. It is separate.
 - The LAST exercise block must include 2-3 bonus/alternate exercises marked with note "FLEX — drop or add to adjust for time". This gives the Q flexibility to run long or short.
 
+WORKOUT FORMATS (use when requested):
+- 7s / 9s / 11s: Ladder format. Two exercises at opposite ends. Start Exercise A at 1 rep, Exercise B at 6/8/10. Each round, A goes up by 1, B goes down by 1. Run/mosey between stations. Total reps per exercise always equals 7, 9, or 11.
+- Dora: Partner workout. One partner works on a cumulative rep count (e.g. 100 merkins, 200 squats, 300 LBCs) while the other runs. Switch when the runner returns. Keep going until all reps are done.
+- Four Corners: Set up 4 stations/corners. Different exercise at each. PAX rotate through all 4. Can be timed or rep-based.
+- Ring of Fire: PAX form a circle. One at a time does reps while everyone else holds a static position (e.g. plank, Al Gore). Goes around the full circle.
+- Indian Run: PAX jog in a line. Last man sprints to the front. Continuous rotation. Can add exercises when reaching the front.
+- Partner Work: Pair up. One works, one rests (or runs/does a hold). Trade off.
+- Tabata: 20 seconds work, 10 seconds rest, 8 rounds. Can use one exercise or alternate two.
+- AMRAP: As Many Rounds As Possible in a set time. List 3-5 exercises, PAX cycle through continuously.
+- EMOM: Every Minute On the Minute. Prescribed reps at the top of each minute, rest the remainder.
+
 Return ONLY valid JSON in this exact structure:
 {
   "theme": "string",

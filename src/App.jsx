@@ -584,7 +584,7 @@ const STYLES = `
 export default function F3QPlanner() {
   const [form, setForm] = useState({
     q: "", ao: "", location: "", date: "", time: "5:15 AM",
-    theme: "", equipment: [], terrain: [], duration: "45"
+    theme: "", equipment: [], terrain: [], formats: [], duration: "45"
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -597,6 +597,7 @@ export default function F3QPlanner() {
   const equipment = ["Coupons / Blocks", "Bodyweight", "Resistance Bands", "Sandbags"];
   const terrains  = ["Hill", "Open Field", "Parking Lot", "Track", "Flat Only"];
   const themes    = ["Military / Tactical", "Mental Health", "Movies / Pop Culture", "Sports", "Brotherhood", "Surprise Me"];
+  const formats   = ["7s", "9s", "11s", "Dora", "Four Corners", "Ring of Fire", "Indian Run", "Partner Work", "Tabata", "AMRAP", "EMOM"];
 
   const toggleChip = (key, val) =>
     setForm(f => ({
@@ -613,6 +614,7 @@ Design a themed F3 beatdown with these specs:
 - Theme direction: ${form.theme || "surprise me — pick something bold and memorable"}
 - Equipment: ${form.equipment.length ? form.equipment.join(", ") : "bodyweight only"}
 - Terrain: ${form.terrain.length ? form.terrain.join(", ") : "flat"}
+- Workout formats to include: ${form.formats.length ? form.formats.join(", ") : "Q's choice — pick what fits the theme"}
 - Extra notes: ${form.notes || "none"}
 
 Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and hard-hitting anthems. Sequence to match the energy arc — warmup through finisher.`;
@@ -766,6 +768,15 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                     {terrains.map(t => (
                       <div key={t} className={`chip ${form.terrain.includes(t) ? "active" : ""}`}
                         onClick={() => toggleChip("terrain", t)}>{t}</div>
+                    ))}
+                  </div>
+                </div>
+                <div className="form-group full-width">
+                  <label className="form-label">Workout Formats (optional)</label>
+                  <div className="chips">
+                    {formats.map(f => (
+                      <div key={f} className={`chip ${form.formats.includes(f) ? "active" : ""}`}
+                        onClick={() => toggleChip("formats", f)}>{f}</div>
                     ))}
                   </div>
                 </div>
