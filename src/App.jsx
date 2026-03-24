@@ -603,11 +603,12 @@ export default function F3QPlanner() {
       .then(r => r.json())
       .then(data => setExicon(data))
       .catch(() => {});
-    fetch("https://f3-nation-production.up.railway.app/map/regions")
+    fetch("https://api.f3nation.com/map/location/regions")
       .then(r => r.json())
       .then(data => {
-        if (Array.isArray(data)) {
-          setRegions(data.sort((a, b) => (a.name || "").localeCompare(b.name || "")));
+        const list = Array.isArray(data) ? data : data?.regions;
+        if (Array.isArray(list)) {
+          setRegions(list.sort((a, b) => (a.name || "").localeCompare(b.name || "")));
         }
       })
       .catch(() => {});
@@ -618,7 +619,7 @@ export default function F3QPlanner() {
     if (!form.region) { setAos([]); return; }
     const regionObj = regions.find(r => String(r.id) === form.region || r.name === form.region);
     if (!regionObj) return;
-    fetch(`https://f3-nation-production.up.railway.app/map/events-and-locations?regionId=${regionObj.id}`)
+    fetch(`https://api.f3nation.com/map/location/events-and-locations?regionId=${regionObj.id}`)
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) {
