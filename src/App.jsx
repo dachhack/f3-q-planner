@@ -495,7 +495,7 @@ const STYLES = `
   .playlist-grid { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
   .playlist-row {
     display: grid;
-    grid-template-columns: 32px 1fr 180px 52px;
+    grid-template-columns: 32px 1fr 28px 52px;
     gap: 12px;
     align-items: center;
     padding: 10px 16px;
@@ -511,7 +511,16 @@ const STYLES = `
     text-align: center;
   }
   .playlist-title { font-weight: 600; font-size: 14px; }
+  .playlist-title a { color: inherit; text-decoration: none; border-bottom: 1px dotted rgba(255,255,255,0.2); transition: all 0.15s; }
+  .playlist-title a:hover { color: var(--gold); border-bottom-color: var(--gold); }
   .playlist-artist { font-size: 13px; color: var(--muted); }
+  .playlist-spotify {
+    display: flex; align-items: center; justify-content: center;
+  }
+  .playlist-spotify a {
+    color: var(--muted); transition: color 0.15s; display: flex; align-items: center;
+  }
+  .playlist-spotify a:hover { color: #1DB954; }
   .playlist-duration {
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 13px;
@@ -1370,10 +1379,10 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                               <div className="playlist-row" key={`${si}-${ti}`}>
                                 <div className="playlist-num">{globalNum}</div>
                                 <div>
-                                  <div className="playlist-title">{track.title}</div>
+                                  <div className="playlist-title"><a href={`https://open.spotify.com/search/${encodeURIComponent(track.title + " " + track.artist)}`} target="_blank" rel="noopener noreferrer">{track.title}</a></div>
                                   <div className="playlist-artist">{track.artist}</div>
                                 </div>
-                                <div />
+                                <div className="playlist-spotify"><a href={`https://open.spotify.com/search/${encodeURIComponent(track.title + " " + track.artist)}`} target="_blank" rel="noopener noreferrer" title="Find on Spotify"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg></a></div>
                                 <div className="playlist-duration">{track.duration}</div>
                               </div>
                             );
