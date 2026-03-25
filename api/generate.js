@@ -82,6 +82,30 @@ export default async function handler(req) {
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
     }
+    if (f3path === 'debug-map') {
+      try {
+        const r = await fetch('https://map.f3nation.com', { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        const html = await r.text();
+        // Look for __NEXT_DATA__ or any region JSON
+        const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+        const regionMatches = html.match(/region/gi)?.length || 0;
+        return new Response(JSON.stringify({
+          status: r.status,
+          hasNextData: !!nextDataMatch,
+          nextDataPreview: nextDataMatch ? nextDataMatch[1].substring(0, 3000) : null,
+          regionMentions: regionMatches,
+          htmlSize: html.length,
+          tail: html.slice(-2000)
+        }, null, 2), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), {
+          status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      }
+    }
     const allowed = ['v1/map/location/regions', 'v1/map/location/events-and-locations'];
     const basePath = f3path.split('?')[0];
     if (!allowed.includes(basePath)) {
