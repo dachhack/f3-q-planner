@@ -35,7 +35,11 @@ const STYLES = `
   .header {
     border-bottom: 2px solid var(--gold);
     background: linear-gradient(180deg, #0D1117 0%, var(--black) 100%);
-    padding: 28px 40px 24px;
+    padding: 28px 20px 24px;
+  }
+  .header-inner {
+    max-width: 900px;
+    margin: 0 auto;
     display: flex;
     align-items: flex-end;
     gap: 24px;
@@ -1396,12 +1400,14 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
       <div className="app">
         {/* Header */}
         <div className="header">
-          <div>
-            <div className="header-badge">F3 NATION</div>
-            <h1>Q <span>PLANNER</span></h1>
-            <div className="header-sub">Beatdown Builder · Weinke Generator · Pre-Blast Creator</div>
-            <div style={{marginTop:6,fontSize:11,color:'#666',fontFamily:'Barlow, sans-serif',letterSpacing:'0.5px'}}>
-              v{__APP_VERSION__} · build {__BUILD_TIME__.slice(0, 10)}
+          <div className="header-inner">
+            <div>
+              <div className="header-badge">F3 NATION</div>
+              <h1>Q <span>PLANNER</span></h1>
+              <div className="header-sub">Beatdown Builder · Weinke Generator · Pre-Blast Creator</div>
+              <div style={{marginTop:6,fontSize:11,color:'#666',fontFamily:'Barlow, sans-serif',letterSpacing:'0.5px'}}>
+                v{__APP_VERSION__} · build {__BUILD_TIME__.slice(0, 10)}
+              </div>
             </div>
           </div>
         </div>
