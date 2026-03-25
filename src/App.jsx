@@ -589,6 +589,13 @@ const STYLES = `
     margin-top: 16px; border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
   }
   .ao-map { height: 200px; width: 100%; }
+  .output-map-wrap {
+    width: 280px; height: 140px; border-radius: 4px; overflow: hidden;
+    border: 1px solid var(--border); flex-shrink: 0;
+  }
+  @media (max-width: 600px) {
+    .output-map-wrap { width: 120px; height: 120px; }
+  }
   .ao-map-label {
     background: var(--dark); padding: 6px 12px;
     font-family: 'Barlow Condensed', sans-serif; font-size: 11px;
@@ -1542,7 +1549,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                     </div>
                   </div>
                   {(form.location || aos.find(a => (a.locationName || a.name) === form.ao)?.lat) && (
-                    <div style={{width:280,height:140,borderRadius:4,overflow:'hidden',border:'1px solid var(--border)',flexShrink:0}}>
+                    <div className="output-map-wrap">
                       <div ref={outputMapRef} style={{width:'100%',height:'100%'}} />
                     </div>
                   )}
