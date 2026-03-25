@@ -846,11 +846,18 @@ export default function F3QPlanner() {
     // Filter AOs using location→region name lookup
     let filtered = allAos;
     if (Object.keys(locToRegion).length > 0) {
-      // Check what the lookup maps AO IDs to
       const sampleAo = allAos[0];
-      const sampleLookup = sampleAo ? locToRegion[String(sampleAo.id)] : "n/a";
-      console.log("[F3] Filter debug — region:", form.region, "sampleAO id:", sampleAo?.id, "lookup[id]:", sampleLookup);
+      console.log("[F3] Filter debug — region:", form.region, "sampleAO id:", sampleAo?.id, "lookup[id]:", sampleAo ? locToRegion[String(sampleAo.id)] : "n/a");
+      // Try exact match first, then case-insensitive/partial
       filtered = allAos.filter(a => locToRegion[String(a.id)] === form.region);
+      if (filtered.length === 0) {
+        // Region names may differ — match case-insensitively or with/without "F3" prefix
+        const regionLower = form.region.toLowerCase().replace(/^f3\s+/, '');
+        filtered = allAos.filter(a => {
+          const lookupName = (locToRegion[String(a.id)] || '').toLowerCase().replace(/^f3\s+/, '');
+          return lookupName === regionLower;
+        });
+      }
       console.log("[F3] Filtered AOs:", filtered.length, "of", allAos.length);
     }
     if (filtered.length === 0) filtered = allAos; // fallback to all
