@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle } from "docx";
+import { saveAs } from "file-saver";
 
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:ital,wght@0,400;0,600;1,400&display=swap');
@@ -298,12 +300,12 @@ const STYLES = `
     color: var(--steel);
     letter-spacing: 1px;
     min-height: 20px;
-    animation: phraseFade 3s ease-in-out infinite;
+    animation: phraseFade 5s ease-in-out infinite;
   }
   @keyframes phraseFade {
     0% { opacity: 0; transform: translateY(4px); }
-    15% { opacity: 1; transform: translateY(0); }
-    85% { opacity: 1; transform: translateY(0); }
+    10% { opacity: 1; transform: translateY(0); }
+    90% { opacity: 1; transform: translateY(0); }
     100% { opacity: 0; transform: translateY(-4px); }
   }
 
@@ -412,6 +414,17 @@ const STYLES = `
     font-size: 14px;
     font-weight: 600;
     color: var(--text);
+  }
+  .exercise-link {
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--steel);
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .exercise-link:hover {
+    color: var(--steel);
+    border-bottom-color: var(--steel);
+    border-bottom-style: solid;
   }
   .exercise-note {
     font-size: 12px;
@@ -590,10 +603,57 @@ const STYLES = `
   .pace-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
   .pace-time { font-family: 'Barlow Condensed', sans-serif; color: var(--red); font-weight: 700; letter-spacing: 1px; }
 
+  .btn-pdf {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid var(--steel);
+    color: var(--steel);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-pdf:hover {
+    background: var(--steel);
+    color: white;
+  }
+  .weinke-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
   @media (max-width: 700px) {
     .cot-options { grid-template-columns: 1fr; }
     .weinke-header { flex-direction: column; gap: 16px; }
     .weinke-meta { flex-wrap: wrap; }
+  }
+
+  @media print {
+    body { background: white !important; color: #111 !important; }
+    .app { background: white !important; background-image: none !important; }
+    .header, .form-panel, .tabs, .loading, .empty-state, .btn-pdf, .weinke-actions, .copy-btn { display: none !important; }
+    .main { display: block !important; padding: 0 !important; }
+    .output { padding: 0 !important; }
+    .weinke-header { background: white !important; border-color: #333 !important; }
+    .weinke-title { color: #111 !important; }
+    .block { background: white !important; border-color: #ccc !important; break-inside: avoid; }
+    .block-header { background: #f0f0f0 !important; }
+    .block-name, .block-time { color: #111 !important; }
+    .exercise-link { color: #111 !important; border-bottom: none !important; }
+    .exercise-reps { color: #333 !important; }
+    .ic-badge, .oyo-badge { border-color: #666 !important; color: #666 !important; background: transparent !important; }
+    .pace-table th { background: #333 !important; }
+    .cot-card { background: #f8f8f8 !important; border-color: #ccc !important; }
+    .cot-label, .cot-text { color: #111 !important; }
+    .section-label { color: #111 !important; }
+    .weinke-meta-label, .weinke-meta-value { color: #333 !important; }
+    .playlist-section, .preblast-section { display: none !important; }
   }
 `;
 
@@ -675,7 +735,7 @@ export default function F3QPlanner() {
     const interval = setInterval(() => {
       i = (i + 1) % shuffled.length;
       setLoadingPhrase(shuffled[i]);
-    }, 3000);
+    }, 5000);
     return () => clearInterval(interval);
   }, [loading]);
 
@@ -828,6 +888,182 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
     navigator.clipboard.writeText(result.preBlast);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Build a lookup map from normalized exercise names to exicon entries
+  const exiconMap = useRef(new Map());
+  useEffect(() => {
+    const map = new Map();
+    exicon.forEach(ex => {
+      map.set(ex.name.toLowerCase().trim(), ex);
+    });
+    exiconMap.current = map;
+  }, [exicon]);
+
+  const getExiconUrl = (exerciseName) => {
+    const normalized = exerciseName.toLowerCase().trim();
+    const match = exiconMap.current.get(normalized);
+    if (match) {
+      const slug = match.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      return `https://f3nation.com/exicon/${slug}`;
+    }
+    return null;
+  };
+
+  const downloadPdf = () => {
+    window.print();
+  };
+
+  const downloadDocx = async () => {
+    if (!result) return;
+
+    const noBorders = {
+      top: { style: BorderStyle.NONE, size: 0 },
+      bottom: { style: BorderStyle.NONE, size: 0 },
+      left: { style: BorderStyle.NONE, size: 0 },
+      right: { style: BorderStyle.NONE, size: 0 },
+    };
+
+    const sections = [];
+
+    // Title
+    sections.push(
+      new Paragraph({
+        children: [new TextRun({ text: "F3 WEINKE", size: 20, color: "888888", font: "Arial" })],
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: `🪖 ${result.theme}`, size: 40, bold: true, font: "Arial" })],
+        heading: HeadingLevel.HEADING_1,
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: result.tagline, italics: true, size: 22, color: "666666", font: "Arial" })],
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: `Q: ${form.q || "Q"}  ·  AO: ${form.ao || "AO"}  ·  Date: ${form.date || "TBD"}  ·  Time: ${form.time}`, size: 20, color: "444444", font: "Arial" }),
+        ],
+        spacing: { after: 300 },
+      }),
+    );
+
+    // Blocks
+    result.blocks?.forEach(block => {
+      sections.push(
+        new Paragraph({
+          children: [
+            new TextRun({ text: `${block.time}  `, size: 22, bold: true, color: "C0392B", font: "Arial" }),
+            new TextRun({ text: `${block.name}`, size: 26, bold: true, font: "Arial" }),
+            new TextRun({ text: `  ·  ${block.themeLabel}  ·  ${block.duration}`, size: 20, color: "666666", font: "Arial" }),
+          ],
+          spacing: { before: 300, after: 100 },
+          shading: { fill: "F0F0F0" },
+        }),
+      );
+      block.exercises?.forEach(ex => {
+        sections.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: `  ${ex.name}`, size: 21, bold: true, font: "Arial" }),
+              new TextRun({ text: ex.cadence ? `  [${ex.cadence}]` : "", size: 18, color: "4A7FA5", font: "Arial" }),
+              new TextRun({ text: `    ${ex.reps}`, size: 20, color: "C9A84C", font: "Arial" }),
+            ],
+            spacing: { after: 40 },
+          }),
+        );
+        if (ex.note) {
+          sections.push(
+            new Paragraph({
+              children: [new TextRun({ text: `      ${ex.note}`, size: 18, italics: true, color: "888888", font: "Arial" })],
+              spacing: { after: 60 },
+            }),
+          );
+        }
+      });
+    });
+
+    // Pace Guide
+    sections.push(
+      new Paragraph({
+        children: [new TextRun({ text: "PACE GUIDE", size: 24, bold: true, font: "Arial" })],
+        spacing: { before: 400, after: 150 },
+      }),
+    );
+    if (result.paceGuide?.length) {
+      const rows = result.paceGuide.map(row =>
+        new TableRow({
+          children: [
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: row.segment, size: 20, font: "Arial" })] })], borders: noBorders, width: { size: 60, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: row.time, size: 20, bold: true, color: "C0392B", font: "Arial" })] })], borders: noBorders, width: { size: 40, type: WidthType.PERCENTAGE } }),
+          ],
+        })
+      );
+      sections.push(new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }));
+    }
+
+    // Closing Messages
+    sections.push(
+      new Paragraph({
+        children: [new TextRun({ text: "CLOSING MESSAGE OPTIONS", size: 24, bold: true, font: "Arial" })],
+        spacing: { before: 400, after: 150 },
+      }),
+    );
+    [["Faith-Based", result.closingMessages?.faith], ["Secular", result.closingMessages?.secular], ["Themed", result.closingMessages?.themed]].forEach(([label, text]) => {
+      if (text) {
+        sections.push(
+          new Paragraph({ children: [new TextRun({ text: `${label}:`, size: 20, bold: true, font: "Arial" })], spacing: { before: 100 } }),
+          new Paragraph({ children: [new TextRun({ text, size: 20, italics: true, color: "444444", font: "Arial" })], spacing: { after: 100 } }),
+        );
+      }
+    });
+
+    // Playlist
+    sections.push(
+      new Paragraph({
+        children: [new TextRun({ text: "PLAYLIST", size: 24, bold: true, font: "Arial" })],
+        spacing: { before: 400, after: 150 },
+      }),
+    );
+    result.playlist?.forEach(section => {
+      sections.push(
+        new Paragraph({
+          children: [new TextRun({ text: section.section, size: 22, bold: true, color: "4A7FA5", font: "Arial" })],
+          spacing: { before: 200, after: 80 },
+        }),
+      );
+      section.tracks.forEach(track => {
+        sections.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: `${track.title}`, size: 20, bold: true, font: "Arial" }),
+              new TextRun({ text: ` — ${track.artist}`, size: 20, color: "666666", font: "Arial" }),
+              new TextRun({ text: `  (${track.duration})`, size: 18, color: "888888", font: "Arial" }),
+            ],
+            spacing: { after: 40 },
+          }),
+        );
+      });
+    });
+
+    // Pre-Blast
+    sections.push(
+      new Paragraph({
+        children: [new TextRun({ text: "PRE-BLAST", size: 24, bold: true, font: "Arial" })],
+        spacing: { before: 400, after: 150 },
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: result.preBlast, size: 20, font: "Arial" })],
+      }),
+    );
+
+    const doc = new Document({
+      sections: [{ children: sections }],
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const filename = `${(result.theme || "beatdown").replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}-weinke.docx`;
+    saveAs(blob, filename);
   };
 
   useEffect(() => {
@@ -1033,6 +1269,12 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                   </div>
                 </div>
 
+                {/* Actions */}
+                <div className="weinke-actions">
+                  <button className="btn-pdf" onClick={downloadPdf}>📄 Download PDF</button>
+                  <button className="btn-pdf" onClick={downloadDocx}>📝 Download .docx</button>
+                </div>
+
                 {/* Tabs */}
                 <div className="tabs">
                   {[["weinke","🪖 Weinke"],["playlist","🎵 Playlist"],["preblast","📣 Pre-Blast"]].map(([id,label]) => (
@@ -1058,7 +1300,12 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                               <div className="exercise-row" key={j}>
                                 <div>
                                   <div className="exercise-name">
-                                    {ex.name}
+                                    {(() => {
+                                      const url = getExiconUrl(ex.name);
+                                      return url
+                                        ? <a href={url} className="exercise-link" target="_blank" rel="noopener noreferrer" title="View in F3 Exicon">{ex.name}</a>
+                                        : ex.name;
+                                    })()}
                                     {ex.cadence === "IC" && <span className="ic-badge">IC</span>}
                                     {ex.cadence === "OYO" && <span className="oyo-badge">OYO</span>}
                                   </div>
