@@ -572,6 +572,29 @@ const STYLES = `
   .copy-btn:hover { border-color: var(--gold); color: var(--gold); }
   .copy-btn.copied { border-color: var(--success); color: var(--success); }
 
+  /* ── PAX AUTOCOMPLETE ── */
+  .q-autocomplete { position: relative; }
+  .q-suggestions {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+    background: var(--dark); border: 1px solid var(--border); border-top: none;
+    max-height: 200px; overflow-y: auto;
+  }
+  .q-suggestion {
+    padding: 8px 12px; font-size: 14px; cursor: pointer; transition: background 0.1s;
+  }
+  .q-suggestion:hover, .q-suggestion.highlighted { background: rgba(201,168,76,0.15); color: var(--gold); }
+
+  /* ── AO MAP ── */
+  .ao-map-container {
+    margin-top: 16px; border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+  }
+  .ao-map { height: 200px; width: 100%; }
+  .ao-map-label {
+    background: var(--dark); padding: 6px 12px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 11px;
+    letter-spacing: 2px; color: var(--muted); text-transform: uppercase;
+  }
+
   /* ── TABS ── */
   .tabs { display: flex; gap: 2px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
   .tab {
@@ -681,6 +704,13 @@ export default function F3QPlanner() {
   const [regions, setRegions] = useState([]);
   const [aos, setAos] = useState([]);
   const [loadingPhrase, setLoadingPhrase] = useState("");
+  const [pax, setPax] = useState([]);
+  const [qSuggestions, setQSuggestions] = useState([]);
+  const [qFocused, setQFocused] = useState(false);
+  const [qHighlight, setQHighlight] = useState(-1);
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markerRef = useRef(null);
   const outputRef = useRef(null);
 
   const LOADING_PHRASES = [
@@ -780,13 +810,93 @@ export default function F3QPlanner() {
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) {
-          const unique = [...new Map(data.map(d => [d.locationName || d.name, d])).values()]
+          // API returns tuples: [id, name, logoUrl, lat, lon, fullAddress, events[]]
+          const normalized = data.map(d => {
+            if (Array.isArray(d)) {
+              return { id: d[0], locationName: d[1], lat: d[3], lon: d[4], locationAddress: d[5] };
+            }
+            return d; // already an object (fallback)
+          });
+          const unique = [...new Map(normalized.map(d => [d.locationName || d.name, d])).values()]
             .sort((a, b) => (a.locationName || a.name || "").localeCompare(b.locationName || b.name || ""));
           setAos(unique);
         }
       })
       .catch(() => {});
   }, [form.region, regions]);
+
+  // Load PAX names when region changes
+  useEffect(() => {
+    if (!form.region) { setPax([]); return; }
+    const regionObj = regions.find(r => r.name === form.region);
+    if (!regionObj || !regionObj.id) { setPax([]); return; }
+    fetch(`https://api.f3nation.com/map/location/members?regionId=${regionObj.id}`)
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(data => {
+        const list = Array.isArray(data) ? data : data?.members || data?.pax || [];
+        const names = list
+          .map(m => m.f3Name || m.name || m.nickname || m.f3_name || "")
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b));
+        setPax([...new Set(names)]);
+      })
+      .catch(() => setPax([]));
+  }, [form.region, regions]);
+
+  // Q name autocomplete filter
+  useEffect(() => {
+    if (!form.q || !qFocused || pax.length === 0) { setQSuggestions([]); return; }
+    const query = form.q.toLowerCase();
+    setQSuggestions(pax.filter(n => n.toLowerCase().includes(query)).slice(0, 10));
+  }, [form.q, pax, qFocused]);
+
+  // Map: show AO location
+  useEffect(() => {
+    const address = form.location;
+    const el = mapRef.current;
+    if (!address || !el || !window.L) return;
+    // Small delay to let the DOM render the map container
+    const timer = setTimeout(() => {
+      if (!mapInstanceRef.current) {
+        mapInstanceRef.current = window.L.map(el, { zoomControl: true, attributionControl: false }).setView([35.2, -80.8], 13);
+        window.L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(mapInstanceRef.current);
+      }
+      mapInstanceRef.current.invalidateSize();
+      const map = mapInstanceRef.current;
+      // Check if AO has lat/lng from API data
+      const aoObj = aos.find(a => (a.locationName || a.name) === form.ao);
+      const lat = aoObj?.lat || aoObj?.latitude;
+      const lng = aoObj?.lon || aoObj?.lng || aoObj?.longitude;
+      if (lat && lng) {
+        placeMarker(map, lat, lng, form.ao);
+      } else {
+        // Geocode the address via Nominatim (free, no API key)
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`)
+          .then(r => r.json())
+          .then(data => {
+            if (data.length > 0) placeMarker(map, parseFloat(data[0].lat), parseFloat(data[0].lon), form.ao);
+          })
+          .catch(() => {});
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [form.location, form.ao, aos]);
+
+  // Cleanup map when location is cleared
+  useEffect(() => {
+    if (!form.location && mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+      markerRef.current = null;
+    }
+  }, [form.location]);
+
+  const placeMarker = (map, lat, lng, label) => {
+    if (markerRef.current) markerRef.current.remove();
+    map.setView([lat, lng], 15);
+    markerRef.current = window.L.marker([lat, lng]).addTo(map);
+    if (label) markerRef.current.bindPopup(`<b>${label}</b>`).openPopup();
+  };
 
   const equipment = ["Coupons / Blocks", "Bodyweight", "Resistance Bands", "Sandbags"];
   const terrains  = ["Hill", "Open Field", "Parking Lot", "Track", "Flat Only"];
@@ -1116,8 +1226,29 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
             <div className={`form-body ${formCollapsed ? "collapsed" : ""}`}>
               <div className="form-grid">
                 <div className="form-group">
-                  <label className="form-label">Q Name</label>
-                  <input className="form-input" placeholder="Your F3 name" value={form.q} onChange={e => setForm(f => ({...f, q: e.target.value}))} />
+                  <label className="form-label">Q Name {pax.length > 0 && <span style={{fontSize:10,color:"var(--muted)",fontWeight:400}}>({pax.length} PAX loaded)</span>}</label>
+                  <div className="q-autocomplete">
+                    <input className="form-input" placeholder={pax.length ? "Start typing your F3 name..." : "Your F3 name"} value={form.q}
+                      onChange={e => { setForm(f => ({...f, q: e.target.value})); setQHighlight(-1); }}
+                      onFocus={() => setQFocused(true)}
+                      onBlur={() => setTimeout(() => setQFocused(false), 150)}
+                      onKeyDown={e => {
+                        if (e.key === "ArrowDown") { e.preventDefault(); setQHighlight(h => Math.min(h + 1, qSuggestions.length - 1)); }
+                        else if (e.key === "ArrowUp") { e.preventDefault(); setQHighlight(h => Math.max(h - 1, 0)); }
+                        else if (e.key === "Enter" && qHighlight >= 0) { e.preventDefault(); setForm(f => ({...f, q: qSuggestions[qHighlight]})); setQFocused(false); }
+                      }}
+                    />
+                    {qFocused && qSuggestions.length > 0 && (
+                      <div className="q-suggestions">
+                        {qSuggestions.map((name, i) => (
+                          <div key={name} className={`q-suggestion ${i === qHighlight ? "highlighted" : ""}`}
+                            onMouseDown={() => { setForm(f => ({...f, q: name})); setQFocused(false); }}>
+                            {name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="form-group">
                   <label className="form-label">Region</label>
@@ -1152,6 +1283,14 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                   <label className="form-label">Location</label>
                   <input className="form-input" placeholder={form.ao && aos.length ? "Auto-filled from AO" : "e.g. Sweetapple Park"} value={form.location} onChange={e => setForm(f => ({...f, location: e.target.value}))} />
                 </div>
+                {form.location && (
+                  <div className="form-group full-width">
+                    <div className="ao-map-container">
+                      <div className="ao-map-label">AO Location</div>
+                      <div className="ao-map" ref={mapRef} />
+                    </div>
+                  </div>
+                )}
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
                   <div className="form-group">
                     <label className="form-label">Date</label>
