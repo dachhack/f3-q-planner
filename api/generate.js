@@ -94,8 +94,10 @@ export default async function handler(req) {
       const apiUrl = `https://api.f3nation.com/${f3path}`;
       const res = await fetch(apiUrl, {
         headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (compatible; F3QPlanner/1.0)'
+          'Accept': 'application/json, text/plain, */*',
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Origin': 'https://map.f3nation.com',
+          'Referer': 'https://map.f3nation.com/'
         }
       });
       const data = await res.text();
