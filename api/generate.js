@@ -82,6 +82,31 @@ export default async function handler(req) {
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
     }
+    // Debug mode: try multiple URL patterns to find the right one
+    if (f3path === 'debug') {
+      const patterns = [
+        'https://api.f3nation.com/map/location/regions',
+        'https://api.f3nation.com/api/trpc/map.location.regions',
+        'https://api.f3nation.com/trpc/map.location.regions',
+        'https://api.f3nation.com/map.location.regions',
+        'https://api.f3nation.com/api/map/location/regions',
+        'https://api.f3nation.com/',
+      ];
+      const results = [];
+      for (const url of patterns) {
+        try {
+          const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+          const body = await r.text();
+          results.push({ url, status: r.status, body: body.substring(0, 200) });
+        } catch (e) {
+          results.push({ url, error: e.message });
+        }
+      }
+      return new Response(JSON.stringify(results, null, 2), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
     const allowed = ['map/location/regions', 'map/location/events-and-locations', 'map/location/members'];
     const basePath = f3path.split('?')[0];
     if (!allowed.includes(basePath)) {
