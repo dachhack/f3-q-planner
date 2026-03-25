@@ -692,7 +692,7 @@ const STYLES = `
 export default function F3QPlanner() {
   const [form, setForm] = useState({
     q: "", ao: "", region: "", location: "", date: "", time: "5:15 AM",
-    theme: "", equipment: [], terrain: [], formats: [], duration: "45", complexity: "balanced"
+    theme: "", equipment: [], terrain: [], formats: [], duration: "45", complexity: 3
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -951,11 +951,13 @@ export default function F3QPlanner() {
   const terrains  = ["Hill", "Open Field", "Parking Lot", "Track", "Flat Only"];
   const themes    = ["Military / Tactical", "Mental Health", "Movies / Pop Culture", "Sports", "Brotherhood", "Surprise Me"];
   const formats      = ["7s", "9s", "11s", "Dora", "Four Corners", "Ring of Fire", "Indian Run", "Partner Work", "Tabata", "AMRAP", "EMOM"];
-  const complexities = [
-    { value: "simple", label: "Simple — fewer exercises, more repeats" },
-    { value: "balanced", label: "Balanced" },
-    { value: "variety", label: "High Variety — lots of different exercises" }
-  ];
+  const complexityLabels = {
+    1: "Minimal — 3-4 exercises per block, heavy repeats",
+    2: "Simple — fewer exercises, more repeats",
+    3: "Balanced — moderate variety",
+    4: "High Variety — lots of different exercises",
+    5: "Max Variety — all different, no repeats"
+  };
 
   const toggleChip = (key, val) =>
     setForm(f => ({
@@ -993,7 +995,7 @@ export default function F3QPlanner() {
 - Equipment: ${form.equipment.length ? form.equipment.join(", ") : "bodyweight only"}
 - Terrain: ${form.terrain.length ? form.terrain.join(", ") : "flat"}
 - Workout formats to include: ${form.formats.length ? form.formats.join(", ") : "Q's choice — pick what fits the theme"}
-- Workout style: ${form.complexity === "simple" ? "SIMPLE — use fewer distinct exercises (4-6 per block max). Repeat exercises across rounds/sets instead of introducing new ones. Favor ladder formats, Doras, and rep-based work over long exercise lists. Keep it easy for the Q to remember." : form.complexity === "variety" ? "HIGH VARIETY — use many different exercises. Minimize repeats. Each block should feature fresh movements. Pack in exercise variety to keep PAX guessing." : "BALANCED — moderate variety, some repeats where it makes sense"}
+- Exercise variety (1-5 scale): ${form.complexity}/5 — ${form.complexity <= 1 ? "MINIMAL — only 3-4 distinct exercises per block. Heavy repeats across rounds. Ultra-simple for the Q to remember and call." : form.complexity === 2 ? "SIMPLE — use fewer distinct exercises (4-6 per block max). Repeat exercises across rounds/sets. Favor ladder formats, Doras, and rep-based work over long exercise lists. Keep it easy for the Q to remember." : form.complexity === 3 ? "BALANCED — moderate variety, some repeats where it makes sense. Mix of familiar and fresh exercises." : form.complexity === 4 ? "HIGH VARIETY — use many different exercises. Minimize repeats. Each block should feature fresh movements. Pack in exercise variety to keep PAX guessing." : "MAX VARIETY — every exercise is different. Zero repeats across the entire beatdown. Maximum creativity — surprise the PAX with exercises they haven't done before."}
 - Extra notes: ${form.notes || "none"}
 
 Use REAL F3 exercise names from the Exicon when possible. Here are exercises to draw from:
@@ -1394,15 +1396,25 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                   </div>
                 </div>
                 <div className="form-group full-width">
-                  <label className="form-label">Workout Style</label>
-                  <div className="chips">
-                    {complexities.map(c => (
-                      <div key={c.value} className={`chip ${form.complexity === c.value ? "active" : ""}`}
-                        onClick={() => setForm(f => ({...f, complexity: c.value}))}>
-                        {c.label}
-                      </div>
-                    ))}
+                  <label className="form-label">Exercise Variety <span style={{color:'var(--gold)',fontWeight:700}}>{form.complexity}</span></label>
+                  <div style={{display:'flex',alignItems:'center',gap:12}}>
+                    <span style={{fontSize:11,color:'var(--muted)',fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:1,whiteSpace:'nowrap'}}>SIMPLE</span>
+                    <div style={{display:'flex',gap:4,flex:1}}>
+                      {[1,2,3,4,5].map(n => (
+                        <div key={n} onClick={() => setForm(f => ({...f, complexity: n}))}
+                          style={{flex:1,height:32,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
+                            background: n <= form.complexity ? 'var(--gold)' : 'var(--panel)',
+                            color: n <= form.complexity ? 'var(--black)' : 'var(--muted)',
+                            fontFamily:"'Bebas Neue',sans-serif",fontSize:16,
+                            border: `1px solid ${n <= form.complexity ? 'var(--gold)' : 'var(--border)'}`,
+                            transition:'all 0.15s'}}>
+                          {n}
+                        </div>
+                      ))}
+                    </div>
+                    <span style={{fontSize:11,color:'var(--muted)',fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:1,whiteSpace:'nowrap'}}>MAX</span>
                   </div>
+                  <div style={{fontSize:12,color:'var(--muted)',marginTop:6,fontStyle:'italic'}}>{complexityLabels[form.complexity]}</div>
                 </div>
                 <div className="form-group full-width">
                   <label className="form-label">Notes / Special Requests</label>
