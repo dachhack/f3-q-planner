@@ -784,7 +784,7 @@ export default function F3QPlanner() {
       .then(r => r.json())
       .then(data => setExicon(data))
       .catch(() => {});
-    fetch("/api/generate?f3=v1/map/location/regions")
+    fetch("/api/generate?f3=v1/map/location/regionsWithLocation")
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(data => {
         const raw = Array.isArray(data) ? data : data?.regions || [];
@@ -813,7 +813,7 @@ export default function F3QPlanner() {
     const regionId = regionObj?.id || regionObj?.regionId;
     console.log("[F3] Region selected:", form.region, "→ id:", regionId, "obj:", regionObj);
     if (!regionObj || !regionId) { setAos([]); return; }
-    fetch(`/api/generate?f3=${encodeURIComponent(`v1/map/location/events-and-locations?regionId=${regionId}`)}`)
+    fetch("/api/generate?f3=v1/map/location/eventsAndLocations")
       .then(r => r.json())
       .then(data => {
         console.log("[F3] AO raw response sample:", Array.isArray(data) ? data[0] : data);

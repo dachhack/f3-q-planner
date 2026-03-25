@@ -60,6 +60,23 @@ Return ONLY valid JSON in this exact structure:
   "preBlast": "Full social media pre-blast post. Tease theme and vibe only — NO exercise names, rep counts, or block details. End with logistics."
 }`;
 
+// F3 Nation API config (oRPC protocol)
+const F3_API_BASE = 'https://api.f3nation.com';
+const F3_API_HEADERS = {
+  'Content-Type': 'application/json',
+  'Accept': '*/*',
+  'Authorization': 'Bearer f3_map_service_account',
+  'Client': 'orpc',
+  'Origin': 'https://map.f3nation.com',
+  'Referer': 'https://map.f3nation.com/'
+};
+const F3_ALLOWED_PATHS = [
+  'v1/map/location/regions',
+  'v1/map/location/regionsWithLocation',
+  'v1/map/location/events-and-locations',
+  'v1/map/location/eventsAndLocations'
+];
+
 export default async function handler(req) {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -72,7 +89,7 @@ export default async function handler(req) {
     });
   }
 
-  // GET = F3 API proxy
+  // GET = F3 API proxy (oRPC uses POST under the hood)
   if (req.method === 'GET') {
     const url = new URL(req.url);
     const f3path = url.searchParams.get('f3');
@@ -82,42 +99,19 @@ export default async function handler(req) {
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
     }
-    if (f3path === 'debug-map') {
-      try {
-        const r = await fetch('https://map.f3nation.com', { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        const html = await r.text();
-        // Look for __NEXT_DATA__ or any region JSON
-        const nextDataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-        const regionMatches = html.match(/region/gi)?.length || 0;
-        return new Response(JSON.stringify({
-          status: r.status,
-          hasNextData: !!nextDataMatch,
-          nextDataPreview: nextDataMatch ? nextDataMatch[1].substring(0, 3000) : null,
-          regionMentions: regionMatches,
-          htmlSize: html.length,
-          tail: html.slice(-2000)
-        }, null, 2), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-        });
-      } catch (e) {
-        return new Response(JSON.stringify({ error: e.message }), {
-          status: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-        });
-      }
-    }
-    const allowed = ['v1/map/location/regions', 'v1/map/location/events-and-locations'];
     const basePath = f3path.split('?')[0];
-    if (!allowed.includes(basePath)) {
+    if (!F3_ALLOWED_PATHS.includes(basePath)) {
       return new Response(JSON.stringify({ error: 'Path not allowed' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
     }
     try {
-      const apiUrl = `https://api.f3nation.com/${f3path}`;
+      const apiUrl = `${F3_API_BASE}/${f3path}`;
       const res = await fetch(apiUrl, {
-        headers: { 'Accept': 'application/json' }
+        method: 'POST',
+        headers: F3_API_HEADERS,
+        body: '{}'
       });
       const data = await res.text();
       return new Response(data, {
