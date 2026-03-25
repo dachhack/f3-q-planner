@@ -830,8 +830,9 @@ export default function F3QPlanner() {
     fetch("/api/generate?f3=v1/map/location/locationIdToRegionNameLookup")
       .then(r => r.json())
       .then(data => {
-        const lookup = data?.json || data || {};
-        console.log("[F3] Location→Region lookup keys:", Object.keys(lookup).length, "sample values:", Object.values(lookup).slice(0, 5));
+        // oRPC may wrap in {json: {locationIdToRegionNameLookup: {...}}} or {json: {...}}
+        const lookup = data?.json?.locationIdToRegionNameLookup || data?.json || data || {};
+        console.log("[F3] Location→Region lookup keys:", Object.keys(lookup).length, "sample entries:", Object.entries(lookup).slice(0, 5));
         setLocToRegion(lookup);
       })
       .catch(() => {});
