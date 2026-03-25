@@ -1,7 +1,7 @@
 {
   "rewrites": [
+    { "source": "/f3api/:path*", "destination": "https://api.f3nation.com/:path*" },
     { "source": "/api/generate", "destination": "/api/generate" },
-    { "source": "/api/f3proxy", "destination": "/api/f3proxy" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
