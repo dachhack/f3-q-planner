@@ -787,10 +787,15 @@ export default function F3QPlanner() {
     fetch("https://api.f3nation.com/map/location/regions")
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(data => {
-        const list = Array.isArray(data) ? data : data?.regions;
-        if (Array.isArray(list) && list.length > 0) {
-          setRegions(list.sort((a, b) => (a.name || "").localeCompare(b.name || "")));
-        } else throw new Error();
+        const raw = Array.isArray(data) ? data : data?.regions || [];
+        if (!Array.isArray(raw) || raw.length === 0) throw new Error();
+        // Normalize: API may return objects {id, name, ...} or tuples
+        const list = raw.map(r => {
+          if (Array.isArray(r)) return { id: r[0], name: r[1], location: r[2] || "" };
+          return r;
+        });
+        console.log("[F3] Regions sample:", list[0]);
+        setRegions(list.sort((a, b) => (a.name || "").localeCompare(b.name || "")));
       })
       .catch(() => {
         // Fallback to bundled static regions list
@@ -805,32 +810,37 @@ export default function F3QPlanner() {
   useEffect(() => {
     if (!form.region) { setAos([]); return; }
     const regionObj = regions.find(r => r.name === form.region);
-    if (!regionObj || !regionObj.id) { setAos([]); return; }
-    fetch(`https://api.f3nation.com/map/location/events-and-locations?regionId=${regionObj.id}`)
+    const regionId = regionObj?.id || regionObj?.regionId;
+    console.log("[F3] Region selected:", form.region, "→ id:", regionId, "obj:", regionObj);
+    if (!regionObj || !regionId) { setAos([]); return; }
+    fetch(`https://api.f3nation.com/map/location/events-and-locations?regionId=${regionId}`)
       .then(r => r.json())
       .then(data => {
-        if (Array.isArray(data)) {
-          // API returns tuples: [id, name, logoUrl, lat, lon, fullAddress, events[]]
-          const normalized = data.map(d => {
-            if (Array.isArray(d)) {
-              return { id: d[0], locationName: d[1], lat: d[3], lon: d[4], locationAddress: d[5] };
-            }
-            return d; // already an object (fallback)
-          });
-          const unique = [...new Map(normalized.map(d => [d.locationName || d.name, d])).values()]
-            .sort((a, b) => (a.locationName || a.name || "").localeCompare(b.locationName || b.name || ""));
-          setAos(unique);
-        }
+        console.log("[F3] AO raw response sample:", Array.isArray(data) ? data[0] : data);
+        const raw = Array.isArray(data) ? data : data?.locations || data?.data || [];
+        if (!Array.isArray(raw)) return;
+        // API may return tuples: [id, name, logoUrl, lat, lon, fullAddress, events[]]
+        const normalized = raw.map(d => {
+          if (Array.isArray(d)) {
+            return { id: d[0], locationName: d[1], lat: d[3], lon: d[4], locationAddress: d[5] };
+          }
+          return d; // already an object
+        });
+        console.log("[F3] AO normalized sample:", normalized[0]);
+        const unique = [...new Map(normalized.map(d => [d.locationName || d.name, d])).values()]
+          .sort((a, b) => (a.locationName || a.name || "").localeCompare(b.locationName || b.name || ""));
+        setAos(unique);
       })
-      .catch(() => {});
+      .catch(err => console.warn("[F3] AO fetch failed:", err));
   }, [form.region, regions]);
 
   // Load PAX names when region changes
   useEffect(() => {
     if (!form.region) { setPax([]); return; }
     const regionObj = regions.find(r => r.name === form.region);
-    if (!regionObj || !regionObj.id) { setPax([]); return; }
-    fetch(`https://api.f3nation.com/map/location/members?regionId=${regionObj.id}`)
+    const regionId = regionObj?.id || regionObj?.regionId;
+    if (!regionObj || !regionId) { setPax([]); return; }
+    fetch(`https://api.f3nation.com/map/location/members?regionId=${regionId}`)
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(data => {
         const list = Array.isArray(data) ? data : data?.members || data?.pax || [];
