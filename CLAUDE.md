@@ -27,6 +27,7 @@ A web app for F3 Q leaders to generate beatdown plans (workouts), Weinkes, playl
 - Beatdown duration is configurable (default 45 minutes)
 - Every block gets a themed name tied to the overall beatdown theme
 - Warmup always comes first, COT always comes last
+- Warmup must be stationary — keep everyone in the circle. No bear crawls, laps, moseys, or movement away from the starting position. Stick to stretches and light calisthenics (SSH, arm circles, Michael Phelps, weed pickers, etc.)
 
 ### Pre-Blast
 - **Never list exercises, rep counts, or block details in the pre-blast**
