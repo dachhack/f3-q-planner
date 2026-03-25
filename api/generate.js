@@ -85,19 +85,19 @@ export default async function handler(req) {
     // Debug mode: try multiple URL patterns to find the right one
     if (f3path === 'debug') {
       const patterns = [
-        'https://api.f3nation.com/map/location/regions',
-        'https://api.f3nation.com/api/trpc/map.location.regions',
-        'https://api.f3nation.com/trpc/map.location.regions',
-        'https://api.f3nation.com/map.location.regions',
-        'https://api.f3nation.com/api/map/location/regions',
         'https://api.f3nation.com/',
+        'https://api.f3nation.com/openapi.json',
+        'https://api.f3nation.com/docs',
+        'https://api.f3nation.com/regions',
+        'https://api.f3nation.com/v1/regions',
+        'https://api.f3nation.com/api/regions',
       ];
       const results = [];
       for (const url of patterns) {
         try {
           const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
           const body = await r.text();
-          results.push({ url, status: r.status, body: body.substring(0, 200) });
+          results.push({ url, status: r.status, body: body.substring(0, 2000) });
         } catch (e) {
           results.push({ url, error: e.message });
         }
