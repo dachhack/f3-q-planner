@@ -699,7 +699,7 @@ const STYLES = `
 export default function F3QPlanner() {
   const [form, setForm] = useState({
     q: "", ao: "", region: "", location: "", date: "", time: "5:15 AM",
-    theme: "", equipment: [], terrain: [], formats: [], duration: "45", complexity: 3
+    theme: "", equipment: [], terrain: [], formats: [], duration: "45", complexity: 3, difficulty: 3
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -997,11 +997,18 @@ export default function F3QPlanner() {
 
     // Muscle group categorization
     const categories = {
-      "Upper Body": ["merkin","diamond merkin","wide merkin","hand release merkin","shoulder tap","overhead press","curl","tricep extension","skull crusher","dip","carolina dry dock","derkin","irkin","peter parker","mike tyson"],
-      "Core": ["lbc","freddie mercury","american hammer","flutter kick","dolly","rosalita","pickle pounder","big boy sit-up","j-lo","hello dolly","dying cockroach","plank","side plank","peter parker plank","boat canoe"],
-      "Lower Body": ["squat","jump squat","lunge","split squat","calf raise","bonnie blair","bobby hurley","box jump","step-up","monkey humper","sumo squat","pistol squat","wall sit","al gore"],
-      "Cardio": ["ssh","high knee","butt kick","burpee","mountain climber","seal jack","jumping jack","squat jump","star jump","plank jack","run","mosey","bear crawl","broad jump","tuck jump"],
-      "Full Body": ["burpee","man maker","thruster","blockee","clean and press","turkish get-up","devil press"]
+      "Chest": ["merkin","diamond merkin","wide merkin","hand release merkin","carolina dry dock","derkin","irkin","mike tyson","peter parker merkin"],
+      "Shoulders": ["overhead press","shoulder tap","blocktanamo","military press","arnold press","lateral raise","front raise","michael phelps","seal clap"],
+      "Arms": ["curl","tricep extension","skull crusher","dip","hammer curl","diamond merkin"],
+      "Back": ["bent over row","coupon row","superman","reverse fly","lawn mower","upright row","pull-up"],
+      "Core": ["lbc","freddie mercury","american hammer","flutter kick","dolly","rosalita","pickle pounder","big boy sit-up","j-lo","hello dolly","dying cockroach","boat canoe","wwii","heels to heaven","penguin","pretzel crunch"],
+      "Abs (Plank)": ["plank","side plank","peter parker plank","plank jack","plank up-down","shoulder tap plank","body saw"],
+      "Quads": ["squat","jump squat","lunge","split squat","bonnie blair","box jump","step-up","sumo squat","pistol squat","goblet squat","air squat","smurf jack"],
+      "Glutes / Hams": ["monkey humper","deadlift","good morning","fire hydrant","donkey kick","hip thrust","glute bridge","single leg deadlift"],
+      "Calves": ["calf raise","bunny hop","seal jack","jump rope"],
+      "Isometric": ["wall sit","al gore","balls to the wall","people's chair","hold","static"],
+      "Cardio": ["ssh","high knee","butt kick","mountain climber","jumping jack","star jump","run","mosey","bear crawl","broad jump","tuck jump","lateral shuffle","karaoke","sprint"],
+      "Full Body": ["burpee","man maker","thruster","blockee","clean and press","turkish get-up","devil press","blockee"]
     };
     const groupCounts = {};
     for (const [group, keywords] of Object.entries(categories)) {
@@ -1087,6 +1094,7 @@ export default function F3QPlanner() {
 - Terrain: ${form.terrain.length ? form.terrain.join(", ") : "flat"}
 - Workout formats to include: ${form.formats.length ? form.formats.join(", ") : "Q's choice — pick what fits the theme"}
 - Exercise variety (1-5 scale): ${form.complexity}/5 — ${form.complexity <= 1 ? "MINIMAL — only 3-4 distinct exercises per block. Heavy repeats across rounds. Ultra-simple for the Q to remember and call." : form.complexity === 2 ? "SIMPLE — use fewer distinct exercises (4-6 per block max). Repeat exercises across rounds/sets. Favor ladder formats, Doras, and rep-based work over long exercise lists. Keep it easy for the Q to remember." : form.complexity === 3 ? "BALANCED — moderate variety, some repeats where it makes sense. Mix of familiar and fresh exercises." : form.complexity === 4 ? "HIGH VARIETY — use many different exercises. Minimize repeats. Each block should feature fresh movements. Pack in exercise variety to keep PAX guessing." : "MAX VARIETY — every exercise is different. Zero repeats across the entire beatdown. Maximum creativity — surprise the PAX with exercises they haven't done before."}
+- Difficulty (1-5 scale): ${form.difficulty}/5 — ${form.difficulty <= 1 ? "EASY — keep reps low (10-12), use lighter exercises, longer transitions. FNG-friendly, no one gets smoked." : form.difficulty === 2 ? "MODERATE — standard rep counts (15-20), steady pace. A solid workout without destroying anyone." : form.difficulty === 3 ? "CHALLENGING — higher reps (20-25), pick up the pace. Include some burpees and compound movements." : form.difficulty === 4 ? "HARD — heavy reps (25-30), minimal rest between exercises. Load up on coupons, burpees, and compound movements. PAX should be gassed." : "BRUTAL — max reps (30+), burpee-heavy, coupon-loaded. Every block should be punishing. No mercy. PAX will question their life choices."}
 - Extra notes: ${form.notes || "none"}
 
 Use REAL F3 exercise names from the Exicon when possible. Here are exercises to draw from:
@@ -1508,6 +1516,29 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                   <div style={{fontSize:12,color:'var(--muted)',marginTop:6,fontStyle:'italic'}}>{complexityLabels[form.complexity]}</div>
                 </div>
                 <div className="form-group full-width">
+                  <label className="form-label">Difficulty <span style={{color:'var(--red)',fontWeight:700}}>{form.difficulty}</span></label>
+                  <div style={{display:'flex',alignItems:'center',gap:12}}>
+                    <span style={{fontSize:11,color:'var(--muted)',fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:1,whiteSpace:'nowrap'}}>EASY</span>
+                    <div style={{display:'flex',gap:4,flex:1}}>
+                      {[1,2,3,4,5].map(n => (
+                        <div key={n} onClick={() => setForm(f => ({...f, difficulty: n}))}
+                          style={{flex:1,height:32,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
+                            background: n <= form.difficulty ? 'var(--red)' : 'var(--panel)',
+                            color: n <= form.difficulty ? 'white' : 'var(--muted)',
+                            fontFamily:"'Bebas Neue',sans-serif",fontSize:16,
+                            border: `1px solid ${n <= form.difficulty ? 'var(--red)' : 'var(--border)'}`,
+                            transition:'all 0.15s'}}>
+                          {n}
+                        </div>
+                      ))}
+                    </div>
+                    <span style={{fontSize:11,color:'var(--muted)',fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:1,whiteSpace:'nowrap'}}>BRUTAL</span>
+                  </div>
+                  <div style={{fontSize:12,color:'var(--muted)',marginTop:6,fontStyle:'italic'}}>
+                    {({1:"Easy — light reps, low intensity, FNG-friendly",2:"Moderate — standard reps, steady pace",3:"Challenging — higher reps, faster pace",4:"Hard — heavy reps, minimal rest, PAX will feel it",5:"Brutal — max reps, burpee-heavy, coupon-loaded punishment"})[form.difficulty]}
+                  </div>
+                </div>
+                <div className="form-group full-width">
                   <label className="form-label">Notes / Special Requests</label>
                   <textarea className="form-textarea" placeholder="e.g. heavy on partner work, avoid burpees, mental health theme..." value={form.notes || ""} onChange={e => setForm(f => ({...f, notes: e.target.value}))} />
                 </div>
@@ -1779,7 +1810,12 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                             <div key={group} style={{display:'grid',gridTemplateColumns:'120px 1fr 32px',gap:8,alignItems:'center'}}>
                               <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:13,letterSpacing:1,color:'var(--text)'}}>{group}</div>
                               <div style={{height:16,background:'var(--panel)',borderRadius:2,overflow:'hidden'}}>
-                                <div style={{width:`${(count/maxGroup)*100}%`,height:'100%',background: group === 'Upper Body' ? 'var(--steel)' : group === 'Core' ? 'var(--gold)' : group === 'Lower Body' ? 'var(--red)' : group === 'Cardio' ? 'var(--success)' : group === 'Full Body' ? '#9B59B6' : 'var(--muted)',borderRadius:2,transition:'width 0.3s'}} />
+                                <div style={{width:`${(count/maxGroup)*100}%`,height:'100%',background: ({
+                                  'Chest':'var(--steel)','Shoulders':'#5B9BD5','Arms':'#7EB8DA','Back':'#2E86C1',
+                                  'Core':'var(--gold)','Abs (Plank)':'#D4AC0D',
+                                  'Quads':'var(--red)','Glutes / Hams':'#E74C3C','Calves':'#F1948A','Isometric':'#CB4335',
+                                  'Cardio':'var(--success)','Full Body':'#9B59B6'
+                                })[group] || 'var(--muted)',borderRadius:2,transition:'width 0.3s'}} />
                               </div>
                               <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,color:'var(--muted)',textAlign:'right'}}>{count}</div>
                             </div>
