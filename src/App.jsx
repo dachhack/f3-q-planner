@@ -291,6 +291,21 @@ const STYLES = `
     color: var(--gold);
   }
   .loading-sub { font-size: 12px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .loading-phrase {
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--steel);
+    letter-spacing: 1px;
+    min-height: 20px;
+    animation: phraseFade 3s ease-in-out infinite;
+  }
+  @keyframes phraseFade {
+    0% { opacity: 0; transform: translateY(4px); }
+    15% { opacity: 1; transform: translateY(0); }
+    85% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-4px); }
+  }
 
   /* ── WEINKE PREVIEW ── */
   .weinke-header {
@@ -596,7 +611,73 @@ export default function F3QPlanner() {
   const [exicon, setExicon] = useState([]);
   const [regions, setRegions] = useState([]);
   const [aos, setAos] = useState([]);
+  const [loadingPhrase, setLoadingPhrase] = useState("");
   const outputRef = useRef(null);
+
+  const LOADING_PHRASES = [
+    "Woody is not impressed",
+    "Zima can't hear you over the Candlebox",
+    "Where are the blue pallets?",
+    "Pea Shooter got caught in the innovation center again",
+    "Rummaging through Sweep3r's supplies",
+    "Questioning every life choice at the start line",
+    "Trying to remember if burpees were your idea",
+    "Convincing your legs this was voluntary",
+    "Pretending that last rep counted",
+    "Looking for the PAX who said 'just one more'",
+    "Calculating the exact number of merkins you owe",
+    "Waiting for the six... still waiting",
+    "Consulting the coupon about life decisions",
+    "Lying to yourself about enjoying this",
+    "Googling 'is 5:15 AM even real'",
+    "Loading extra burpees... you're welcome",
+    "Shuffling the playlist to maximum suffering",
+    "Your FNG name is now 'Why Am I Here'",
+    "Reminding you that modified is still a rep",
+    "Bear crawling through the algorithm",
+    "SSH... the server is holding",
+    "Lunging toward a completed workout plan",
+    "Mumble chatter detected in the cloud",
+    "Finding exercises your knees won't forgive",
+    "Adding one more round because Q said so",
+    "The coupons aren't going to carry themselves",
+    "Somewhere a PAX just fartsacked",
+    "Debating whether wall sits count as rest",
+    "Your alarm went off 3 hours ago for this",
+    "Generating motivation you didn't ask for",
+    "Hill repeats? Oh yes, hill repeats",
+    "Six-ing up the slowest cloud server",
+    "Omaha! Switching to the backup plan",
+    "Loading pain tolerance settings",
+    "Checking if the AO has enough parking",
+    "Stretching the truth about your mile time",
+    "Inserting unnecessary bear crawls",
+    "The Q just smiled... that's never good",
+    "Replacing all exercises with burpees",
+    "This seemed like a good idea last night",
+    "Calibrating the pain-to-fun ratio",
+    "Deploying coupons to the launch point",
+    "Thinking about coffeeteria already",
+    "Adding exercises that don't exist yet",
+    "Your gloom clock says it's go time",
+    "Counting reps in Fibonacci sequence",
+    "Making sure no PAX is left behind",
+    "Warming up the warmup for the warmup",
+    "Parsing the difference between 'hard' and 'impossible'",
+    "Asking ChatGPT... just kidding, this is Claude",
+  ];
+
+  useEffect(() => {
+    if (!loading) return;
+    const shuffled = [...LOADING_PHRASES].sort(() => Math.random() - 0.5);
+    let i = 0;
+    setLoadingPhrase(shuffled[0]);
+    const interval = setInterval(() => {
+      i = (i + 1) % shuffled.length;
+      setLoadingPhrase(shuffled[i]);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   // Load Exicon exercise database + regions/AOs on mount
   useEffect(() => {
@@ -918,6 +999,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                 <div className="loading-text">BUILDING YOUR BEATDOWN</div>
                 <div className="loading-bar-wrap"><div className="loading-bar" /></div>
                 <div className="loading-sub">Generating Weinke · Playlist · Pre-Blast</div>
+                <div className="loading-phrase" key={loadingPhrase}>{loadingPhrase}</div>
               </div>
             )}
 
