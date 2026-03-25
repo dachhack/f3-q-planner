@@ -12,6 +12,7 @@ RULES:
 - COT = Circle of Trust (closing)
 - Always group IC exercises together — never break them up with OYO exercises
 - Theme every block with a creative name that ties to the overall theme
+- WARMUP RULES: Keep everyone in the circle. No bear crawls, laps, moseys, Indian runs, or any exercise that moves PAX away from the starting position. Warmup should be stationary stretches and light calisthenics only (e.g. SSH, arm circles, Michael Phelps, weed pickers, imperial walkers, hillbillies, windmills, cherry pickers, etc.)
 - FILL THE ENTIRE DURATION with exercises — no rest breaks, no water breaks, no programmed pauses. Every minute should be accounted for with work.
 - COT happens AFTER the workout duration is over — do not include it in the timed blocks. It is separate.
 - The LAST exercise block must include 2-3 bonus/alternate exercises marked with note "FLEX — drop or add to adjust for time". This gives the Q flexibility to run long or short.
