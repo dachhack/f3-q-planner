@@ -72,7 +72,6 @@ const STYLES = `
     background: var(--panel);
     border: 1px solid var(--border);
     margin-top: 24px;
-    overflow: hidden;
     transition: margin 0.3s;
   }
   .form-toggle {
@@ -109,12 +108,13 @@ const STYLES = `
   .form-toggle-arrow.collapsed { transform: rotate(-90deg); }
   .form-body {
     max-height: 2000px;
-    overflow: hidden;
+    overflow: visible;
     transition: max-height 0.4s ease, padding 0.4s ease;
     padding: 24px 28px;
   }
   .form-body.collapsed {
     max-height: 0;
+    overflow: hidden;
     padding-top: 0;
     padding-bottom: 0;
   }
@@ -169,7 +169,15 @@ const STYLES = `
   .form-input:focus, .form-select:focus, .form-textarea:focus {
     border-color: var(--gold);
   }
-  .form-select { appearance: none; cursor: pointer; }
+  .form-select {
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238892A4' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
   .form-textarea { resize: vertical; min-height: 80px; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
