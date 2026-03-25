@@ -1068,35 +1068,45 @@ export default function F3QPlanner() {
       groupCounts[group] = (groupCounts[group] || 0) + 1;
     }
 
-    // Duration parsing
+    // Duration parsing — try block durations, fall back to pace guide times or configured duration
     const blockDurations = r.blocks.map(b => {
       const match = (b.duration || "").match(/(\d+)/);
       return match ? parseInt(match[1]) : 0;
     });
-    const totalMinutes = blockDurations.reduce((a, b) => a + b, 0);
+    let totalMinutes = blockDurations.reduce((a, b) => a + b, 0);
+    // If parsed duration seems too low, try pace guide end times
+    if (totalMinutes < 20 && r.paceGuide?.length > 0) {
+      const lastPace = r.paceGuide[r.paceGuide.length - 1];
+      const endMatch = (lastPace?.time || "").match(/(\d+)(?::|\s*–\s*(\d+))/);
+      if (endMatch) {
+        const endMin = endMatch[2] ? parseInt(endMatch[2]) : parseInt(endMatch[1]);
+        if (endMin > totalMinutes) totalMinutes = endMin;
+      }
+    }
+    // Final fallback: use the configured duration
+    if (totalMinutes < 15) totalMinutes = parseInt(form.duration) || 45;
 
-    // Difficulty estimate (1-5) based on rep counts, exercise types, and volume
+    // Difficulty estimate (1-5) — calibrated to match the 1-5 input scale
     const burpeeCount = allExercises.filter(e => (e.name || "").toLowerCase().includes("burpee")).length;
     const hardExercises = allExercises.filter(e => {
       const name = (e.name || "").toLowerCase();
-      return ["burpee","man maker","thruster","blockee","devil press","clean and press","bear crawl"].some(h => name.includes(h));
+      return ["burpee","man maker","thruster","blockee","devil press","clean and press","bear crawl","broad jump","tuck jump"].some(h => name.includes(h));
     }).length;
-    const avgRep = (() => {
-      const reps = allExercises.map(e => { const m = (e.reps || "").match(/(\d+)/); return m ? parseInt(m[1]) : 0; }).filter(r => r > 0);
-      return reps.length > 0 ? reps.reduce((a, b) => a + b, 0) / reps.length : 15;
-    })();
+    const repsArr = allExercises.map(e => { const m = (e.reps || "").match(/(\d+)/); return m ? parseInt(m[1]) : 0; }).filter(r => r > 0);
+    const avgRep = repsArr.length > 0 ? repsArr.reduce((a, b) => a + b, 0) / repsArr.length : 15;
+    const maxRep = repsArr.length > 0 ? Math.max(...repsArr) : 15;
     const isometricCount = allExercises.filter(e => (e.reps || "").toLowerCase().includes("second") || (e.reps || "").toLowerCase().includes("hold")).length;
-    let diffScore = 0;
-    if (avgRep <= 12) diffScore += 1;
-    else if (avgRep <= 16) diffScore += 2;
-    else if (avgRep <= 22) diffScore += 3;
-    else if (avgRep <= 28) diffScore += 4;
-    else diffScore += 5;
-    diffScore += Math.min(2, hardExercises * 0.4);
-    diffScore += Math.min(1, burpeeCount * 0.3);
-    if (totalExercises > 35) diffScore += 0.5;
-    if (isometricCount > 3) diffScore += 0.5;
-    const difficulty = Math.min(5, Math.max(1, Math.round(diffScore / 1.5)));
+    const hardRatio = totalExercises > 0 ? hardExercises / totalExercises : 0;
+
+    // Score each factor on a 1-5 scale, then average
+    let repScore = avgRep <= 12 ? 1 : avgRep <= 15 ? 2 : avgRep <= 20 ? 3 : avgRep <= 25 ? 4 : 5;
+    let hardScore = hardRatio <= 0 ? 1 : hardRatio <= 0.05 ? 2 : hardRatio <= 0.1 ? 3 : hardRatio <= 0.2 ? 4 : 5;
+    let maxRepScore = maxRep <= 15 ? 1 : maxRep <= 20 ? 2 : maxRep <= 25 ? 3 : maxRep <= 30 ? 4 : 5;
+    let volumeScore = totalExercises <= 15 ? 1 : totalExercises <= 20 ? 2 : totalExercises <= 28 ? 3 : totalExercises <= 35 ? 4 : 5;
+    // Weighted average: reps matter most, then hard exercises, then peak intensity, then volume
+    const difficulty = Math.min(5, Math.max(1, Math.round(
+      repScore * 0.4 + hardScore * 0.25 + maxRepScore * 0.2 + volumeScore * 0.15
+    )));
 
     return {
       totalExercises, icCount, oyoCount, uniqueCount, repeatCount,
