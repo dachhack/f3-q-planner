@@ -1001,55 +1001,63 @@ export default function F3QPlanner() {
     const uniqueCount = uniqueNames.size;
     const repeatCount = totalExercises - uniqueCount;
 
-    // Muscle group categorization — hybrid: exicon tags + keyword matching
-    // Map exicon tags to our display groups
-    const tagToGroup = { "Arms": "Arms", "Core": "Core", "Legs": "Legs", "Cardio": "Cardio", "Full Body": "Full Body", "Run": "Cardio", "Mary": "Core", "Coupon": "Coupon Work", "warmup": "Warmup", "Routine": "Full Body", "Music": null };
-    // Build exicon name→group lookup
-    const exiconGroupMap = {};
+    // Muscle group categorization — pre-classify ALL exicon exercises
+    // Description keyword patterns (checked against exercise descriptions)
+    const descPatterns = {
+      "Chest": /\b(merkin|push[-\s]?up|pushup|chest|pec|press.*floor|bench)\b/i,
+      "Shoulders": /\b(shoulder|overhead|press(?!.*chest)|military|delt|lateral raise|front raise|arnold)\b/i,
+      "Arms": /\b(curl|bicep|tricep|skull crush|dip(?!.*plank)|kickback|hammer curl|arm\b)\b/i,
+      "Back": /\b(row|lat |pull[-\s]?up|pullup|superman|reverse fly|lawn mower|deadlift|back(?!\s*pack)|bent.?over)\b/i,
+      "Core": /\b(core|abs|sit[-\s]?up|situp|crunch|oblique|flutter|lbc|v[-\s]?up|twist|scissor|leg raise|heels|wiper|freddie|mercury|american hammer|dolly|rosalita|pickle|j-lo|cockroach|boat|canoe|wwii|penguin|pretzel|mason)\b/i,
+      "Plank": /\b(plank|peter parker(?!.*merkin)|body saw|hover)\b/i,
+      "Legs": /\b(squat|lunge|leg(?!.*raise)|calf|calves|step[-\s]?up|box jump|quad|hamstring|glute|hip thrust|bridge|wall sit|al gore|chair|monkey hump|fire hydrant|donkey|pistol|goblet|sumo|split squat|bonnie|bobby hurley|smurf)\b/i,
+      "Cardio": /\b(run|sprint|jog|mosey|ssh|side straddle|jumping jack|high knee|butt kick|mountain climb|burner|shuffle|karaoke|broad jump|tuck jump|jump rope|seal jack|skater|bear crawl|indian run|lap|star jump)\b/i,
+      "Full Body": /\b(burpee|man.?maker|thruster|blockee|clean.?and.?press|turkish|devil press|cindy|murph)\b/i,
+      "Coupon Work": /\b(coupon|block(?!.*blockee)|ruck|sandbag|kettlebell|\bkb\b|farmer|carry|uhaul|drag|weight|heavy)\b/i,
+    };
+    // Build a comprehensive lookup: exercise name → group
+    const exGroupLookup = {};
+    const tagToGroup = { "Arms": "Arms", "Core": "Core", "Legs": "Legs", "Cardio": "Cardio", "Full Body": "Full Body", "Run": "Cardio", "Mary": "Core", "Coupon": "Coupon Work", "warmup": "Warmup", "Routine": "Full Body" };
     for (const ex of exicon) {
       const name = ex.name.toLowerCase().trim();
+      // 1. Use tags if available
+      let group = null;
       for (const tag of (ex.tags || [])) {
-        const group = tagToGroup[tag];
-        if (group) { exiconGroupMap[name] = group; break; }
+        if (tagToGroup[tag]) { group = tagToGroup[tag]; break; }
       }
+      // 2. Check name against keyword patterns
+      if (!group) {
+        const nameAndDesc = ex.name + " " + (ex.desc || "");
+        for (const [g, pattern] of Object.entries(descPatterns)) {
+          if (pattern.test(ex.name)) { group = g; break; }
+        }
+        // 3. Check description against patterns
+        if (!group && ex.desc) {
+          for (const [g, pattern] of Object.entries(descPatterns)) {
+            if (pattern.test(ex.desc)) { group = g; break; }
+          }
+        }
+      }
+      if (group) exGroupLookup[name] = group;
     }
-    // Keyword fallback for exercises not in exicon or untagged
-    const keywordGroups = {
-      "Chest": ["merkin","dry dock","derkin","irkin","mike tyson","chest press","bench press","hand release"],
-      "Shoulders": ["overhead press","shoulder","blocktanamo","military press","arnold","lateral raise","front raise","michael phelps","seal clap","scarecrow"],
-      "Arms": ["curl","tricep","skull crusher","dip","hammer curl","diamond merkin","kickback"],
-      "Back": ["row","superman","reverse fly","lawn mower","pull-up","pull up","pullup","deadlift","good morning","bent over"],
-      "Core": ["lbc","freddie","mercury","american hammer","flutter","dolly","rosalita","pickle","big boy","sit-up","situp","j-lo","hello dolly","cockroach","boat","canoe","wwii","heels to heaven","penguin","pretzel","crunch","v-up","leg raise","wiper","russian twist","mason twist"],
-      "Plank": ["plank","peter parker","body saw"],
-      "Legs": ["squat","lunge","split squat","bonnie blair","bobby hurley","box jump","step-up","step up","sumo","pistol","goblet","monkey humper","wall sit","al gore","people's chair","calf raise","hip thrust","glute bridge","fire hydrant","donkey kick","smurf","chair"],
-      "Cardio": ["ssh","side straddle","high knee","butt kick","mountain climber","jumping jack","star jump","run","mosey","sprint","shuffle","karaoke","broad jump","tuck jump","jump rope","seal jack","skater","burner"],
-      "Full Body": ["burpee","man maker","thruster","blockee","clean and press","turkish get-up","devil press","cindy","murph"],
-      "Coupon Work": ["coupon","block","ruck","sandbag","kettlebell","kb ","farmer","carry","uhaul","drag"]
-    };
-    const classifyExercise = (name) => {
-      const lower = (name || "").toLowerCase().trim();
-      // 1. Check exicon tag lookup
-      if (exiconGroupMap[lower]) return exiconGroupMap[lower];
-      // 2. Check partial exicon matches
-      for (const [eName, group] of Object.entries(exiconGroupMap)) {
+    // Classify an exercise from the workout
+    const classifyExercise = (exerciseName) => {
+      const lower = (exerciseName || "").toLowerCase().trim();
+      // 1. Exact exicon match
+      if (exGroupLookup[lower]) return exGroupLookup[lower];
+      // 2. Partial match — exercise name contains or is contained by an exicon entry
+      for (const [eName, group] of Object.entries(exGroupLookup)) {
         if (lower.includes(eName) || eName.includes(lower)) return group;
       }
-      // 3. Keyword fallback
-      for (const [group, keywords] of Object.entries(keywordGroups)) {
-        if (keywords.some(k => lower.includes(k))) return group;
+      // 3. Direct keyword pattern match on the exercise name itself
+      for (const [g, pattern] of Object.entries(descPatterns)) {
+        if (pattern.test(lower)) return g;
       }
-      // 4. Check exicon descriptions for clues
-      const exEntry = exicon.find(e => e.name.toLowerCase().trim() === lower);
-      if (exEntry?.desc) {
-        const desc = exEntry.desc.toLowerCase();
-        if (desc.includes("merkin") || desc.includes("push-up") || desc.includes("pushup") || desc.includes("chest")) return "Chest";
-        if (desc.includes("plank")) return "Plank";
-        if (desc.includes("squat") || desc.includes("lunge") || desc.includes("legs")) return "Legs";
-        if (desc.includes("core") || desc.includes("abs") || desc.includes("sit-up") || desc.includes("crunch")) return "Core";
-        if (desc.includes("run") || desc.includes("sprint") || desc.includes("cardio") || desc.includes("jump")) return "Cardio";
-        if (desc.includes("curl") || desc.includes("press") || desc.includes("arm")) return "Arms";
-        if (desc.includes("row") || desc.includes("back") || desc.includes("pull")) return "Back";
-      }
+      // 4. Common F3 patterns
+      if (/hold|static|iso/i.test(lower)) return "Legs";
+      if (/stretch|warm|circle|michael phelps|weed pick|cherry pick|windmill|hillbill|imperial/i.test(lower)) return "Warmup";
+      if (/partner|setup|mosey|grab|return|recover|switch/i.test(lower)) return "Cardio";
+      if (/dora|round|set|circuit/i.test(lower)) return "Full Body";
       return "Other";
     };
     const groupCounts = {};
