@@ -91,12 +91,23 @@ export default async function handler(req) {
       });
     }
     try {
-      const res = await fetch(`https://api.f3nation.com/${f3path}`, {
-        headers: { 'Accept': 'application/json' }
+      const apiUrl = `https://api.f3nation.com/${f3path}`;
+      const res = await fetch(apiUrl, {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (compatible; F3QPlanner/1.0)'
+        }
       });
       const data = await res.text();
+      // Debug: wrap with status info so we can see what the F3 API returns
+      if (!res.ok) {
+        return new Response(JSON.stringify({ error: `F3 API returned ${res.status}`, url: apiUrl, body: data.substring(0, 500) }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        });
+      }
       return new Response(data, {
-        status: res.status,
+        status: 200,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=3600' }
       });
     } catch (err) {
