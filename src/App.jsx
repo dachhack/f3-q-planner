@@ -990,7 +990,7 @@ export default function F3QPlanner() {
 Use REAL F3 exercise names from the Exicon when possible. Here are exercises to draw from:
 ${exerciseNames}
 
-Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and hard-hitting anthems. Sequence to match the energy arc — warmup through finisher.`;
+Playlist: Mix classic rock, 90s hip-hop, and hard-hitting anthems. Sequence to match the energy arc — warmup through finisher.`;
   };
 
   const generate = async () => {
@@ -1558,7 +1558,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                 {/* PLAYLIST TAB */}
                 {activeTab === "playlist" && (
                   <div className="playlist-section">
-                    <div className="section-label">{form.duration}-Min Playlist · Men in their 40s &amp; 50s</div>
+                    <div className="section-label">{form.duration}-Min Playlist</div>
                     <div className="playlist-grid">
                       {result.playlist?.map((section, si) => (
                         <>
