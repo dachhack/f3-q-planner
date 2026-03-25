@@ -1027,15 +1027,28 @@ export default function F3QPlanner() {
     });
     const totalMinutes = blockDurations.reduce((a, b) => a + b, 0);
 
-    // Difficulty estimate (1-5)
+    // Difficulty estimate (1-5) based on rep counts, exercise types, and volume
     const burpeeCount = allExercises.filter(e => (e.name || "").toLowerCase().includes("burpee")).length;
-    const highRepCount = allExercises.filter(e => {
-      const match = (e.reps || "").match(/(\d+)/);
-      return match && parseInt(match[1]) >= 20;
+    const hardExercises = allExercises.filter(e => {
+      const name = (e.name || "").toLowerCase();
+      return ["burpee","man maker","thruster","blockee","devil press","clean and press","bear crawl"].some(h => name.includes(h));
     }).length;
-    const difficulty = Math.min(5, Math.max(1, Math.round(
-      1 + (burpeeCount * 0.5) + (highRepCount * 0.3) + (totalExercises > 30 ? 1 : 0) + (repeatCount < 3 ? 0.5 : 0)
-    )));
+    const avgRep = (() => {
+      const reps = allExercises.map(e => { const m = (e.reps || "").match(/(\d+)/); return m ? parseInt(m[1]) : 0; }).filter(r => r > 0);
+      return reps.length > 0 ? reps.reduce((a, b) => a + b, 0) / reps.length : 15;
+    })();
+    const isometricCount = allExercises.filter(e => (e.reps || "").toLowerCase().includes("second") || (e.reps || "").toLowerCase().includes("hold")).length;
+    let diffScore = 0;
+    if (avgRep <= 12) diffScore += 1;
+    else if (avgRep <= 16) diffScore += 2;
+    else if (avgRep <= 22) diffScore += 3;
+    else if (avgRep <= 28) diffScore += 4;
+    else diffScore += 5;
+    diffScore += Math.min(2, hardExercises * 0.4);
+    diffScore += Math.min(1, burpeeCount * 0.3);
+    if (totalExercises > 35) diffScore += 0.5;
+    if (isometricCount > 3) diffScore += 0.5;
+    const difficulty = Math.min(5, Math.max(1, Math.round(diffScore / 1.5)));
 
     return {
       totalExercises, icCount, oyoCount, uniqueCount, repeatCount,
@@ -1093,8 +1106,8 @@ export default function F3QPlanner() {
 - Equipment: ${form.equipment.length ? form.equipment.join(", ") : "bodyweight only"}
 - Terrain: ${form.terrain.length ? form.terrain.join(", ") : "flat"}
 - Workout formats to include: ${form.formats.length ? form.formats.join(", ") : "Q's choice — pick what fits the theme"}
-- Exercise variety (1-5 scale): ${form.complexity}/5 — ${form.complexity <= 1 ? "MINIMAL — only 3-4 distinct exercises per block. Heavy repeats across rounds. Ultra-simple for the Q to remember and call." : form.complexity === 2 ? "SIMPLE — use fewer distinct exercises (4-6 per block max). Repeat exercises across rounds/sets. Favor ladder formats, Doras, and rep-based work over long exercise lists. Keep it easy for the Q to remember." : form.complexity === 3 ? "BALANCED — moderate variety, some repeats where it makes sense. Mix of familiar and fresh exercises." : form.complexity === 4 ? "HIGH VARIETY — use many different exercises. Minimize repeats. Each block should feature fresh movements. Pack in exercise variety to keep PAX guessing." : "MAX VARIETY — every exercise is different. Zero repeats across the entire beatdown. Maximum creativity — surprise the PAX with exercises they haven't done before."}
-- Difficulty (1-5 scale): ${form.difficulty}/5 — ${form.difficulty <= 1 ? "EASY — keep reps low (10-12), use lighter exercises, longer transitions. FNG-friendly, no one gets smoked." : form.difficulty === 2 ? "MODERATE — standard rep counts (15-20), steady pace. A solid workout without destroying anyone." : form.difficulty === 3 ? "CHALLENGING — higher reps (20-25), pick up the pace. Include some burpees and compound movements." : form.difficulty === 4 ? "HARD — heavy reps (25-30), minimal rest between exercises. Load up on coupons, burpees, and compound movements. PAX should be gassed." : "BRUTAL — max reps (30+), burpee-heavy, coupon-loaded. Every block should be punishing. No mercy. PAX will question their life choices."}
+- Exercise variety (${form.complexity}/5): ${form.complexity <= 1 ? "CRITICAL: MINIMAL variety. Use ONLY 3-4 distinct exercises for the ENTIRE workout. Repeat the same exercises every round/set. Do NOT introduce new exercises in each block — reuse the same ones. Example: Merkins, Squats, LBCs repeated across all blocks." : form.complexity === 2 ? "IMPORTANT: LOW variety. Use only 4-6 distinct exercises total across the whole workout. REPEAT exercises heavily across rounds and blocks. Do NOT use a different exercise for every line — reuse the same core exercises. Favor ladder formats, Doras, and rep-based circuits with the same few movements." : form.complexity === 3 ? "BALANCED — moderate variety, some repeats where it makes sense. Mix of familiar and fresh exercises." : form.complexity === 4 ? "HIGH VARIETY — use many different exercises. Minimize repeats. Each block should feature fresh movements." : "MAX VARIETY — every exercise is different. Zero repeats across the entire beatdown."}
+- Difficulty (${form.difficulty}/5): ${form.difficulty <= 1 ? "CRITICAL: EASY workout. Keep ALL reps at 10-12 IC or OYO. NO burpees. NO high-rep sets. Use light exercises (SSH, arm circles, light squats). Include generous transition time. This is for FNGs and recovery days." : form.difficulty === 2 ? "IMPORTANT: MODERATE workout. Keep reps at 15 max. Limit burpees to 1 set max. No sets above 20 reps. Use standard exercises at a comfortable pace. NO death-by or max-effort sets." : form.difficulty === 3 ? "CHALLENGING — reps around 15-20. Include some burpees and compound movements. Good pace but manageable." : form.difficulty === 4 ? "HARD — reps 20-25, minimal rest. Load up on coupons, burpees, and compound movements. PAX should be gassed." : "BRUTAL — reps 25-30+, burpee-heavy, coupon-loaded. Every block punishing. No mercy."}
 - Extra notes: ${form.notes || "none"}
 
 Use REAL F3 exercise names from the Exicon when possible. Here are exercises to draw from:
