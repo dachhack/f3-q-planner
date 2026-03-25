@@ -1576,24 +1576,69 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                             </div>
                           </div>
                           <div className="exercises">
-                            {block.exercises?.map((ex, j) => (
-                              <div className="exercise-row" key={j}>
-                                <div>
-                                  <div className="exercise-name">
-                                    {(() => {
-                                      const url = getExiconUrl(ex.name);
-                                      return url
-                                        ? <a href={url} className="exercise-link" target="_blank" rel="noopener noreferrer" title="View in F3 Exicon">{ex.name}</a>
-                                        : ex.name;
-                                    })()}
-                                    {ex.cadence === "IC" && <span className="ic-badge">IC</span>}
-                                    {ex.cadence === "OYO" && <span className="oyo-badge">OYO</span>}
-                                  </div>
-                                  {ex.note && <div className="exercise-note">{ex.note}</div>}
-                                </div>
-                                <div className="exercise-reps">{ex.reps}</div>
-                              </div>
-                            ))}
+                            {(() => {
+                              // Detect repeating sequences and collapse them
+                              const exercises = block.exercises || [];
+                              const rendered = [];
+                              let i = 0;
+                              while (i < exercises.length) {
+                                // Try to find a repeating sequence starting at i
+                                let bestLen = 0, bestCount = 0;
+                                for (let seqLen = 1; seqLen <= Math.floor((exercises.length - i) / 2); seqLen++) {
+                                  let count = 1;
+                                  while (i + count * seqLen + seqLen <= exercises.length) {
+                                    let match = true;
+                                    for (let k = 0; k < seqLen; k++) {
+                                      if (exercises[i + k].name !== exercises[i + count * seqLen + k].name) { match = false; break; }
+                                    }
+                                    if (match) count++; else break;
+                                  }
+                                  if (count > 1 && seqLen * count > bestLen * bestCount) { bestLen = seqLen; bestCount = count; }
+                                }
+                                if (bestCount > 1) {
+                                  // Render the sequence once, then a repeat badge
+                                  for (let k = 0; k < bestLen; k++) {
+                                    const ex = exercises[i + k];
+                                    rendered.push(
+                                      <div className="exercise-row" key={`${i}-${k}`}>
+                                        <div>
+                                          <div className="exercise-name">
+                                            {(() => { const url = getExiconUrl(ex.name); return url ? <a href={url} className="exercise-link" target="_blank" rel="noopener noreferrer" title="View in F3 Exicon">{ex.name}</a> : ex.name; })()}
+                                            {ex.cadence === "IC" && <span className="ic-badge">IC</span>}
+                                            {ex.cadence === "OYO" && <span className="oyo-badge">OYO</span>}
+                                          </div>
+                                          {ex.note && <div className="exercise-note">{ex.note}</div>}
+                                        </div>
+                                        <div className="exercise-reps">{ex.reps}</div>
+                                      </div>
+                                    );
+                                  }
+                                  rendered.push(
+                                    <div key={`repeat-${i}`} style={{textAlign:'center',padding:'8px 0',fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:3,color:'var(--gold)',background:'rgba(201,168,76,0.06)',borderLeft:'3px solid var(--gold)',margin:'4px 0'}}>
+                                      REPEAT x{bestCount}
+                                    </div>
+                                  );
+                                  i += bestLen * bestCount;
+                                } else {
+                                  const ex = exercises[i];
+                                  rendered.push(
+                                    <div className="exercise-row" key={i}>
+                                      <div>
+                                        <div className="exercise-name">
+                                          {(() => { const url = getExiconUrl(ex.name); return url ? <a href={url} className="exercise-link" target="_blank" rel="noopener noreferrer" title="View in F3 Exicon">{ex.name}</a> : ex.name; })()}
+                                          {ex.cadence === "IC" && <span className="ic-badge">IC</span>}
+                                          {ex.cadence === "OYO" && <span className="oyo-badge">OYO</span>}
+                                        </div>
+                                        {ex.note && <div className="exercise-note">{ex.note}</div>}
+                                      </div>
+                                      <div className="exercise-reps">{ex.reps}</div>
+                                    </div>
+                                  );
+                                  i++;
+                                }
+                              }
+                              return rendered;
+                            })()}
                           </div>
                         </div>
                       ))}
