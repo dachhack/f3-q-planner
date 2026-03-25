@@ -827,7 +827,7 @@ export default function F3QPlanner() {
   // Load location-to-region lookup on mount
   const [locToRegion, setLocToRegion] = useState({});
   useEffect(() => {
-    fetch("/api/generate?f3=v1/map/location/location-id-to-region-name-lookup")
+    fetch("/api/generate?f3=v1/map/location/locationIdToRegionNameLookup")
       .then(r => r.json())
       .then(data => {
         const lookup = data?.json || data || {};
