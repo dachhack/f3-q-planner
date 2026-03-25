@@ -785,20 +785,21 @@ export default function F3QPlanner() {
       .then(data => setExicon(data))
       .catch(() => {});
     fetch("/api/generate?f3=v1/map/location/regionsWithLocation")
-      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
-        const raw = Array.isArray(data) ? data : data?.regions || [];
-        if (!Array.isArray(raw) || raw.length === 0) throw new Error();
-        // Normalize: API may return objects {id, name, ...} or tuples
+        console.log("[F3] Regions raw type:", typeof data, "isArray:", Array.isArray(data), "sample:", JSON.stringify(data).substring(0, 300));
+        const raw = Array.isArray(data) ? data : data?.regions || data?.data || [];
+        if (!Array.isArray(raw) || raw.length === 0) throw new Error("No regions in response");
+        // Normalize: API may return objects or tuples
         const list = raw.map(r => {
           if (Array.isArray(r)) return { id: r[0], name: r[1], location: r[2] || "" };
           return r;
         });
-        console.log("[F3] Regions sample:", list[0]);
+        console.log("[F3] Regions parsed sample:", list[0]);
         setRegions(list.sort((a, b) => (a.name || "").localeCompare(b.name || "")));
       })
-      .catch(() => {
-        // Fallback to bundled static regions list
+      .catch(err => {
+        console.warn("[F3] Regions API failed:", err.message, "— using static fallback");
         fetch("/regions.json")
           .then(r => r.json())
           .then(data => setRegions(data.sort((a, b) => (a.name || "").localeCompare(b.name || ""))))
@@ -806,34 +807,45 @@ export default function F3QPlanner() {
       });
   }, []);
 
-  // Load AOs when region changes
+  // Load all AO locations on mount
+  const [allAos, setAllAos] = useState([]);
+  useEffect(() => {
+    fetch("/api/generate?f3=v1/map/location/eventsAndLocations")
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        console.log("[F3] AO raw type:", typeof data, "isArray:", Array.isArray(data), "sample:", JSON.stringify(data).substring(0, 300));
+        const raw = Array.isArray(data) ? data : data?.locations || data?.data || [];
+        if (!Array.isArray(raw)) { console.warn("[F3] AO data not array"); return; }
+        const normalized = raw.map(d => {
+          if (Array.isArray(d)) {
+            return { id: d[0], locationName: d[1], lat: d[3], lon: d[4], locationAddress: d[5], regionId: d[6] };
+          }
+          return d;
+        });
+        console.log("[F3] AO count:", normalized.length, "sample:", normalized[0]);
+        setAllAos(normalized);
+      })
+      .catch(err => console.warn("[F3] AO fetch failed:", err.message));
+  }, []);
+
+  // Filter AOs when region changes
   useEffect(() => {
     if (!form.region) { setAos([]); return; }
     const regionObj = regions.find(r => r.name === form.region);
-    const regionId = regionObj?.id || regionObj?.regionId;
-    console.log("[F3] Region selected:", form.region, "→ id:", regionId, "obj:", regionObj);
-    if (!regionObj || !regionId) { setAos([]); return; }
-    fetch("/api/generate?f3=v1/map/location/eventsAndLocations")
-      .then(r => { console.log("[F3] AO fetch status:", r.status); return r.json(); })
-      .then(data => {
-        console.log("[F3] AO raw response type:", typeof data, "isArray:", Array.isArray(data), "keys:", data && typeof data === 'object' ? Object.keys(data).slice(0, 10) : 'n/a');
-        console.log("[F3] AO raw response sample:", Array.isArray(data) ? data[0] : JSON.stringify(data).substring(0, 500));
-        const raw = Array.isArray(data) ? data : data?.locations || data?.data || [];
-        if (!Array.isArray(raw)) { console.warn("[F3] AO data is not an array"); return; }
-        // API may return tuples: [id, name, logoUrl, lat, lon, fullAddress, events[]]
-        const normalized = raw.map(d => {
-          if (Array.isArray(d)) {
-            return { id: d[0], locationName: d[1], lat: d[3], lon: d[4], locationAddress: d[5] };
-          }
-          return d; // already an object
-        });
-        console.log("[F3] AO normalized sample:", normalized[0]);
-        const unique = [...new Map(normalized.map(d => [d.locationName || d.name, d])).values()]
-          .sort((a, b) => (a.locationName || a.name || "").localeCompare(b.locationName || b.name || ""));
-        setAos(unique);
-      })
-      .catch(err => console.warn("[F3] AO fetch failed:", err));
-  }, [form.region, regions]);
+    console.log("[F3] Region selected:", form.region, "obj:", regionObj);
+    if (allAos.length > 0 && regionObj?.id) {
+      // Filter by region ID if available
+      const filtered = allAos.filter(a => a.regionId === regionObj.id);
+      const unique = [...new Map(filtered.map(d => [d.locationName || d.name, d])).values()]
+        .sort((a, b) => (a.locationName || a.name || "").localeCompare(b.locationName || b.name || ""));
+      setAos(unique.length > 0 ? unique : allAos);
+    } else {
+      // Show all AOs if we can't filter by region
+      const unique = [...new Map(allAos.map(d => [d.locationName || d.name, d])).values()]
+        .sort((a, b) => (a.locationName || a.name || "").localeCompare(b.locationName || b.name || ""));
+      setAos(unique);
+    }
+  }, [form.region, regions, allAos]);
 
   // PAX names — no public API endpoint available yet
 
