@@ -584,7 +584,7 @@ const STYLES = `
 export default function F3QPlanner() {
   const [form, setForm] = useState({
     q: "", ao: "", region: "", location: "", date: "", time: "5:15 AM",
-    theme: "", equipment: [], terrain: [], formats: [], duration: "45"
+    theme: "", equipment: [], terrain: [], formats: [], duration: "45", complexity: "balanced"
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -623,8 +623,8 @@ export default function F3QPlanner() {
   // Load AOs when region changes
   useEffect(() => {
     if (!form.region) { setAos([]); return; }
-    const regionObj = regions.find(r => String(r.id) === form.region || r.name === form.region);
-    if (!regionObj) return;
+    const regionObj = regions.find(r => r.name === form.region);
+    if (!regionObj || !regionObj.id) { setAos([]); return; }
     fetch(`https://api.f3nation.com/map/location/events-and-locations?regionId=${regionObj.id}`)
       .then(r => r.json())
       .then(data => {
@@ -640,7 +640,12 @@ export default function F3QPlanner() {
   const equipment = ["Coupons / Blocks", "Bodyweight", "Resistance Bands", "Sandbags"];
   const terrains  = ["Hill", "Open Field", "Parking Lot", "Track", "Flat Only"];
   const themes    = ["Military / Tactical", "Mental Health", "Movies / Pop Culture", "Sports", "Brotherhood", "Surprise Me"];
-  const formats   = ["7s", "9s", "11s", "Dora", "Four Corners", "Ring of Fire", "Indian Run", "Partner Work", "Tabata", "AMRAP", "EMOM"];
+  const formats      = ["7s", "9s", "11s", "Dora", "Four Corners", "Ring of Fire", "Indian Run", "Partner Work", "Tabata", "AMRAP", "EMOM"];
+  const complexities = [
+    { value: "simple", label: "Simple — fewer exercises, more repeats" },
+    { value: "balanced", label: "Balanced" },
+    { value: "variety", label: "High Variety — lots of different exercises" }
+  ];
 
   const toggleChip = (key, val) =>
     setForm(f => ({
@@ -678,6 +683,7 @@ export default function F3QPlanner() {
 - Equipment: ${form.equipment.length ? form.equipment.join(", ") : "bodyweight only"}
 - Terrain: ${form.terrain.length ? form.terrain.join(", ") : "flat"}
 - Workout formats to include: ${form.formats.length ? form.formats.join(", ") : "Q's choice — pick what fits the theme"}
+- Workout style: ${form.complexity === "simple" ? "SIMPLE — use fewer distinct exercises (4-6 per block max). Repeat exercises across rounds/sets instead of introducing new ones. Favor ladder formats, Doras, and rep-based work over long exercise lists. Keep it easy for the Q to remember." : form.complexity === "variety" ? "HIGH VARIETY — use many different exercises. Minimize repeats. Each block should feature fresh movements. Pack in exercise variety to keep PAX guessing." : "BALANCED — moderate variety, some repeats where it makes sense"}
 - Extra notes: ${form.notes || "none"}
 
 Use REAL F3 exercise names from the Exicon when possible. Here are exercises to draw from:
@@ -774,7 +780,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                 <div className="form-toggle-title">BEATDOWN SETUP</div>
                 {formCollapsed && (form.q || form.ao || form.theme) && (
                   <div className="form-toggle-summary">
-                    {[form.q, form.ao, regions.find(r => String(r.id) === form.region)?.name, form.theme, form.duration + " min"].filter(Boolean).join(" · ")}
+                    {[form.q, form.ao, form.region, form.theme, form.duration + " min"].filter(Boolean).join(" · ")}
                   </div>
                 )}
               </div>
@@ -792,7 +798,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                     <select className="form-select" value={form.region} onChange={e => setForm(f => ({...f, region: e.target.value, ao: "", location: ""}))}>
                       <option value="">Select a region...</option>
                       {regions.map(r => (
-                        <option key={r.id} value={String(r.id)}>{r.name}</option>
+                        <option key={r.name} value={r.name}>{r.name}{r.location ? ` (${r.location})` : ""}</option>
                       ))}
                     </select>
                   ) : (
@@ -869,6 +875,17 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                     {formats.map(f => (
                       <div key={f} className={`chip ${form.formats.includes(f) ? "active" : ""}`}
                         onClick={() => toggleChip("formats", f)}>{f}</div>
+                    ))}
+                  </div>
+                </div>
+                <div className="form-group full-width">
+                  <label className="form-label">Workout Style</label>
+                  <div className="chips">
+                    {complexities.map(c => (
+                      <div key={c.value} className={`chip ${form.complexity === c.value ? "active" : ""}`}
+                        onClick={() => setForm(f => ({...f, complexity: c.value}))}>
+                        {c.label}
+                      </div>
                     ))}
                   </div>
                 </div>
