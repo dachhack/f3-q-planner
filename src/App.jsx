@@ -704,7 +704,7 @@ const STYLES = `
 
 export default function F3QPlanner() {
   const [form, setForm] = useState({
-    q: "", ao: "", region: "", location: "", date: "", time: "5:15 AM",
+    q: "", ao: "", region: "", location: "", date: "", time: "5:30 AM",
     theme: "", equipment: [], terrain: [], formats: [], duration: "45", complexity: 3, difficulty: 3
   });
   const [loading, setLoading] = useState(false);
@@ -744,7 +744,7 @@ export default function F3QPlanner() {
     "Waiting for the six... still waiting",
     "Consulting the coupon about life decisions",
     "Lying to yourself about enjoying this",
-    "Googling 'is 5:15 AM even real'",
+    "Googling 'is 5:30 AM even real'",
     "Loading extra burpees... you're welcome",
     "Shuffling the playlist to maximum suffering",
     "Your FNG name is now 'Why Am I Here'",
@@ -1521,7 +1521,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                   </div>
                   <div className="form-group">
                     <label className="form-label">Start Time</label>
-                    <input className="form-input" placeholder="5:15 AM" value={form.time} onChange={e => setForm(f => ({...f, time: e.target.value}))} />
+                    <input className="form-input" placeholder="5:30 AM" value={form.time} onChange={e => setForm(f => ({...f, time: e.target.value}))} />
                   </div>
                 </div>
                 <div className="form-group">
