@@ -831,7 +831,7 @@ export default function F3QPlanner() {
       .then(r => r.json())
       .then(data => {
         const lookup = data?.json || data || {};
-        console.log("[F3] Location→Region lookup keys:", Object.keys(lookup).length);
+        console.log("[F3] Location→Region lookup keys:", Object.keys(lookup).length, "sample values:", Object.values(lookup).slice(0, 5));
         setLocToRegion(lookup);
       })
       .catch(() => {});
@@ -845,7 +845,12 @@ export default function F3QPlanner() {
     // Filter AOs using location→region name lookup
     let filtered = allAos;
     if (Object.keys(locToRegion).length > 0) {
+      // Check what the lookup maps AO IDs to
+      const sampleAo = allAos[0];
+      const sampleLookup = sampleAo ? locToRegion[String(sampleAo.id)] : "n/a";
+      console.log("[F3] Filter debug — region:", form.region, "sampleAO id:", sampleAo?.id, "lookup[id]:", sampleLookup);
       filtered = allAos.filter(a => locToRegion[String(a.id)] === form.region);
+      console.log("[F3] Filtered AOs:", filtered.length, "of", allAos.length);
     }
     if (filtered.length === 0) filtered = allAos; // fallback to all
     const unique = [...new Map(filtered.map(d => [d.locationName || d.name, d])).values()]
