@@ -84,15 +84,22 @@ export default async function handler(req) {
     }
     // Debug mode: try multiple URL patterns to find the right one
     if (f3path === 'debug') {
-      const patterns = [
-        'https://api.f3nation.com/',
-        'https://api.f3nation.com/openapi.json',
-        'https://api.f3nation.com/docs',
-        'https://api.f3nation.com/regions',
-        'https://api.f3nation.com/v1/regions',
-        'https://api.f3nation.com/api/regions',
-      ];
-      const results = [];
+      // Fetch the docs page and extract the OpenAPI spec URL
+      const docsRes = await fetch('https://api.f3nation.com/docs');
+      const docsHtml = await docsRes.text();
+      // Look for spec/url references in the HTML
+      const specMatches = docsHtml.match(/(?:url|spec|data-url|content)\s*[:=]\s*["']([^"']*(?:openapi|swagger|spec|json|yaml)[^"']*)/gi) || [];
+      const scriptContent = docsHtml.match(/<script[^>]*>([\s\S]*?)<\/script>/gi) || [];
+      // Get last 3000 chars of the page (where script tags usually are)
+      const tail = docsHtml.slice(-3000);
+      return new Response(JSON.stringify({
+        specMatches,
+        scriptTags: scriptContent.length,
+        tailOfPage: tail,
+      }, null, 2), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
       for (const url of patterns) {
         try {
           const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
