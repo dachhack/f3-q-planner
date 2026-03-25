@@ -1,43 +1,27 @@
-export const config = { runtime: 'edge' }
-
-export default async function handler(req) {
-  const url = new URL(req.url);
-  const path = url.searchParams.get('path');
+export default async function handler(req, res) {
+  const { path } = req.query;
   if (!path) {
-    return new Response(JSON.stringify({ error: 'Missing path parameter' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-    });
+    return res.status(400).json({ error: 'Missing path parameter' });
   }
 
   // Only allow known F3 API paths
   const allowed = ['map/location/regions', 'map/location/events-and-locations', 'map/location/members'];
   const basePath = path.split('?')[0];
   if (!allowed.includes(basePath)) {
-    return new Response(JSON.stringify({ error: 'Path not allowed' }), {
-      status: 403,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-    });
+    return res.status(403).json({ error: 'Path not allowed' });
   }
 
   try {
     const apiUrl = `https://api.f3nation.com/${path}`;
-    const res = await fetch(apiUrl, {
+    const response = await fetch(apiUrl, {
       headers: { 'Accept': 'application/json' }
     });
-    const data = await res.text();
-    return new Response(data, {
-      status: res.status,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=3600'
-      }
-    });
+    const data = await response.text();
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Content-Type', 'application/json');
+    return res.status(response.status).send(data);
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 502,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-    });
+    return res.status(502).json({ error: err.message });
   }
 }
