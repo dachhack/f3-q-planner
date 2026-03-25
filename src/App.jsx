@@ -954,6 +954,36 @@ export default function F3QPlanner() {
     return () => clearTimeout(timer);
   }, [result, aos, form.ao, form.location]);
 
+  // Render exercise notes — split numbered lists (e.g. "100 Merkins, 200 Squats") into line items
+  const renderNote = (note) => {
+    if (!note) return null;
+    // Check if note contains a numbered list pattern (e.g. "100 Exercise, 200 Exercise")
+    const items = note.split(/,\s*/).filter(Boolean);
+    const hasNumberedList = items.length >= 2 && items.every(item => /^\d+\s+/.test(item.trim()));
+    if (hasNumberedList) {
+      return (
+        <div className="exercise-note">
+          {items.map((item, i) => (
+            <div key={i} style={{paddingLeft:8,borderLeft:'2px solid var(--border)',marginTop: i > 0 ? 3 : 0}}>{item.trim()}</div>
+          ))}
+        </div>
+      );
+    }
+    // Also handle notes with periods or semicolons as separators
+    const parts = note.split(/[.;]\s*/).filter(s => s.trim().length > 0);
+    const hasMultiSentence = parts.length >= 3 && parts.every(p => /^\d+\s+/.test(p.trim()));
+    if (hasMultiSentence) {
+      return (
+        <div className="exercise-note">
+          {parts.map((item, i) => (
+            <div key={i} style={{paddingLeft:8,borderLeft:'2px solid var(--border)',marginTop: i > 0 ? 3 : 0}}>{item.trim()}</div>
+          ))}
+        </div>
+      );
+    }
+    return <div className="exercise-note">{note}</div>;
+  };
+
   // Workout evaluation
   const evaluateWorkout = (r) => {
     if (!r?.blocks) return null;
@@ -1607,7 +1637,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                                             {ex.cadence === "IC" && <span className="ic-badge">IC</span>}
                                             {ex.cadence === "OYO" && <span className="oyo-badge">OYO</span>}
                                           </div>
-                                          {ex.note && <div className="exercise-note">{ex.note}</div>}
+                                          {renderNote(ex.note)}
                                         </div>
                                         <div className="exercise-reps">{ex.reps}</div>
                                       </div>
@@ -1629,7 +1659,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                                           {ex.cadence === "IC" && <span className="ic-badge">IC</span>}
                                           {ex.cadence === "OYO" && <span className="oyo-badge">OYO</span>}
                                         </div>
-                                        {ex.note && <div className="exercise-note">{ex.note}</div>}
+                                        {renderNote(ex.note)}
                                       </div>
                                       <div className="exercise-reps">{ex.reps}</div>
                                     </div>
