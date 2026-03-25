@@ -74,7 +74,9 @@ const F3_ALLOWED_PATHS = [
   'v1/map/location/regions',
   'v1/map/location/regionsWithLocation',
   'v1/map/location/events-and-locations',
-  'v1/map/location/eventsAndLocations'
+  'v1/map/location/eventsAndLocations',
+  'v1/map/location/location-workout',
+  'v1/map/location/locationWorkout'
 ];
 
 export default async function handler(req) {
