@@ -947,6 +947,60 @@ export default function F3QPlanner() {
     return () => clearTimeout(timer);
   }, [result, aos, form.ao, form.location]);
 
+  // Workout evaluation
+  const evaluateWorkout = (r) => {
+    if (!r?.blocks) return null;
+    const allExercises = r.blocks.flatMap(b => b.exercises || []);
+    const totalExercises = allExercises.length;
+    const icCount = allExercises.filter(e => e.cadence === "IC").length;
+    const oyoCount = allExercises.filter(e => e.cadence === "OYO").length;
+    const uniqueNames = new Set(allExercises.map(e => e.name?.toLowerCase().trim()));
+    const uniqueCount = uniqueNames.size;
+    const repeatCount = totalExercises - uniqueCount;
+
+    // Muscle group categorization
+    const categories = {
+      "Upper Body": ["merkin","diamond merkin","wide merkin","hand release merkin","shoulder tap","overhead press","curl","tricep extension","skull crusher","dip","carolina dry dock","derkin","irkin","peter parker","mike tyson"],
+      "Core": ["lbc","freddie mercury","american hammer","flutter kick","dolly","rosalita","pickle pounder","big boy sit-up","j-lo","hello dolly","dying cockroach","plank","side plank","peter parker plank","boat canoe"],
+      "Lower Body": ["squat","jump squat","lunge","split squat","calf raise","bonnie blair","bobby hurley","box jump","step-up","monkey humper","sumo squat","pistol squat","wall sit","al gore"],
+      "Cardio": ["ssh","high knee","butt kick","burpee","mountain climber","seal jack","jumping jack","squat jump","star jump","plank jack","run","mosey","bear crawl","broad jump","tuck jump"],
+      "Full Body": ["burpee","man maker","thruster","blockee","clean and press","turkish get-up","devil press"]
+    };
+    const groupCounts = {};
+    for (const [group, keywords] of Object.entries(categories)) {
+      groupCounts[group] = allExercises.filter(e => {
+        const name = (e.name || "").toLowerCase();
+        return keywords.some(k => name.includes(k));
+      }).length;
+    }
+    const categorized = Object.values(groupCounts).reduce((a, b) => a + b, 0);
+    groupCounts["Other"] = totalExercises - categorized;
+
+    // Duration parsing
+    const blockDurations = r.blocks.map(b => {
+      const match = (b.duration || "").match(/(\d+)/);
+      return match ? parseInt(match[1]) : 0;
+    });
+    const totalMinutes = blockDurations.reduce((a, b) => a + b, 0);
+
+    // Difficulty estimate (1-5)
+    const burpeeCount = allExercises.filter(e => (e.name || "").toLowerCase().includes("burpee")).length;
+    const highRepCount = allExercises.filter(e => {
+      const match = (e.reps || "").match(/(\d+)/);
+      return match && parseInt(match[1]) >= 20;
+    }).length;
+    const difficulty = Math.min(5, Math.max(1, Math.round(
+      1 + (burpeeCount * 0.5) + (highRepCount * 0.3) + (totalExercises > 30 ? 1 : 0) + (repeatCount < 3 ? 0.5 : 0)
+    )));
+
+    return {
+      totalExercises, icCount, oyoCount, uniqueCount, repeatCount,
+      groupCounts, totalMinutes, blockCount: r.blocks.length,
+      blockDurations, difficulty,
+      varietyRatio: totalExercises > 0 ? Math.round((uniqueCount / totalExercises) * 100) : 0
+    };
+  };
+
   const equipment = ["Coupons / Blocks", "Bodyweight", "Resistance Bands", "Sandbags"];
   const terrains  = ["Hill", "Open Field", "Parking Lot", "Track", "Flat Only"];
   const themes    = ["Military / Tactical", "Mental Health", "Movies / Pop Culture", "Sports", "Brotherhood", "Surprise Me"];
@@ -1496,7 +1550,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
 
                 {/* Tabs */}
                 <div className="tabs">
-                  {[["weinke","🪖 Weinke"],["playlist","🎵 Playlist"],["preblast","📣 Pre-Blast"]].map(([id,label]) => (
+                  {[["weinke","🪖 Weinke"],["eval","📊 Evaluation"],["playlist","🎵 Playlist"],["preblast","📣 Pre-Blast"]].map(([id,label]) => (
                     <button key={id} className={`tab ${activeTab===id?"active":""}`} onClick={() => setActiveTab(id)}>{label}</button>
                   ))}
                 </div>
@@ -1602,6 +1656,102 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                     </div>
                   </div>
                 )}
+
+                {/* EVALUATION TAB */}
+                {activeTab === "eval" && (() => {
+                  const ev = evaluateWorkout(result);
+                  if (!ev) return <div style={{color:'var(--muted)',padding:24}}>No data to evaluate</div>;
+                  const maxGroup = Math.max(...Object.values(ev.groupCounts), 1);
+                  return (
+                    <div style={{display:'flex',flexDirection:'column',gap:20,marginTop:24}}>
+                      {/* Overview Stats */}
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+                        {[
+                          ["Exercises", ev.totalExercises],
+                          ["Unique", `${ev.uniqueCount} (${ev.varietyRatio}%)`],
+                          ["Blocks", ev.blockCount],
+                          ["Duration", `${ev.totalMinutes} min`],
+                        ].map(([label, value]) => (
+                          <div key={label} style={{background:'var(--panel)',border:'1px solid var(--border)',padding:'14px 12px',textAlign:'center'}}>
+                            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,color:'var(--gold)'}}>{value}</div>
+                            <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>{label}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* IC / OYO Balance */}
+                      <div>
+                        <div className="section-label">Cadence Balance</div>
+                        <div style={{display:'flex',height:28,borderRadius:4,overflow:'hidden',marginTop:8}}>
+                          {ev.icCount > 0 && <div style={{flex:ev.icCount,background:'var(--steel)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:1,color:'white'}}>IC {ev.icCount}</div>}
+                          {ev.oyoCount > 0 && <div style={{flex:ev.oyoCount,background:'var(--gold)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:1,color:'var(--black)'}}>OYO {ev.oyoCount}</div>}
+                          {ev.totalExercises - ev.icCount - ev.oyoCount > 0 && <div style={{flex:ev.totalExercises - ev.icCount - ev.oyoCount,background:'var(--panel)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:1,color:'var(--muted)'}}>OTHER {ev.totalExercises - ev.icCount - ev.oyoCount}</div>}
+                        </div>
+                      </div>
+
+                      {/* Muscle Group Distribution */}
+                      <div>
+                        <div className="section-label">Muscle Group Distribution</div>
+                        <div style={{display:'flex',flexDirection:'column',gap:6,marginTop:8}}>
+                          {Object.entries(ev.groupCounts).filter(([,v]) => v > 0).sort((a,b) => b[1] - a[1]).map(([group, count]) => (
+                            <div key={group} style={{display:'grid',gridTemplateColumns:'120px 1fr 32px',gap:8,alignItems:'center'}}>
+                              <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:13,letterSpacing:1,color:'var(--text)'}}>{group}</div>
+                              <div style={{height:16,background:'var(--panel)',borderRadius:2,overflow:'hidden'}}>
+                                <div style={{width:`${(count/maxGroup)*100}%`,height:'100%',background: group === 'Upper Body' ? 'var(--steel)' : group === 'Core' ? 'var(--gold)' : group === 'Lower Body' ? 'var(--red)' : group === 'Cardio' ? 'var(--success)' : group === 'Full Body' ? '#9B59B6' : 'var(--muted)',borderRadius:2,transition:'width 0.3s'}} />
+                              </div>
+                              <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,color:'var(--muted)',textAlign:'right'}}>{count}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Block Timeline */}
+                      <div>
+                        <div className="section-label">Block Timeline</div>
+                        <div style={{display:'flex',gap:2,marginTop:8,height:40}}>
+                          {result.blocks?.map((block, i) => {
+                            const dur = ev.blockDurations[i] || 1;
+                            return (
+                              <div key={i} title={`${block.name} — ${block.duration}`} style={{flex:dur,background:`hsl(${40 + i * 30}, 60%, ${35 + i * 5}%)`,borderRadius:3,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:1,color:'white',overflow:'hidden',whiteSpace:'nowrap',padding:'0 4px',cursor:'default'}}>
+                                {block.name?.length > 12 ? block.name.slice(0, 12) + "…" : block.name}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Difficulty */}
+                      <div>
+                        <div className="section-label">Estimated Difficulty</div>
+                        <div style={{display:'flex',gap:6,marginTop:8}}>
+                          {[1,2,3,4,5].map(n => (
+                            <div key={n} style={{width:36,height:36,borderRadius:4,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'Bebas Neue',sans-serif",fontSize:18,
+                              background: n <= ev.difficulty ? 'var(--red)' : 'var(--panel)',
+                              color: n <= ev.difficulty ? 'white' : 'var(--muted)',
+                              border: `1px solid ${n <= ev.difficulty ? 'var(--red)' : 'var(--border)'}`}}>
+                              {n}
+                            </div>
+                          ))}
+                          <div style={{display:'flex',alignItems:'center',marginLeft:8,fontFamily:"'Barlow',sans-serif",fontSize:13,color:'var(--muted)',fontStyle:'italic'}}>
+                            {ev.difficulty <= 2 ? "Light workout — good for FNGs" : ev.difficulty <= 3 ? "Moderate — solid standard beatdown" : ev.difficulty <= 4 ? "Hard — PAX will feel this one" : "Brutal — bring extra water"}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Variety */}
+                      <div>
+                        <div className="section-label">Exercise Variety</div>
+                        <div style={{display:'flex',alignItems:'center',gap:12,marginTop:8}}>
+                          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,color:'var(--gold)'}}>{ev.varietyRatio}%</div>
+                          <div style={{fontFamily:"'Barlow',sans-serif",fontSize:13,color:'var(--muted)'}}>
+                            {ev.uniqueCount} unique exercises out of {ev.totalExercises} total
+                            {ev.repeatCount > 0 && ` · ${ev.repeatCount} repeated`}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* PRE-BLAST TAB */}
                 {activeTab === "preblast" && (
