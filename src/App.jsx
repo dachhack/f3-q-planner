@@ -711,6 +711,9 @@ export default function F3QPlanner() {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
+  const outputMapRef = useRef(null);
+  const outputMapInstanceRef = useRef(null);
+  const outputMarkerRef = useRef(null);
   const outputRef = useRef(null);
 
   const LOADING_PHRASES = [
@@ -888,13 +891,12 @@ export default function F3QPlanner() {
       const lat = aoObj?.lat || aoObj?.latitude;
       const lng = aoObj?.lon || aoObj?.lng || aoObj?.longitude;
       if (lat && lng) {
-        placeMarker(map, lat, lng, form.ao);
-      } else {
+        placeMarker(map, lat, lng, form.ao, markerRef);      } else {
         // Geocode the address via Nominatim (free, no API key)
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`)
           .then(r => r.json())
           .then(data => {
-            if (data.length > 0) placeMarker(map, parseFloat(data[0].lat), parseFloat(data[0].lon), form.ao);
+            if (data.length > 0) placeMarker(map, parseFloat(data[0].lat), parseFloat(data[0].lon), form.ao, markerRef);
           })
           .catch(() => {});
       }
@@ -911,12 +913,30 @@ export default function F3QPlanner() {
     }
   }, [form.location]);
 
-  const placeMarker = (map, lat, lng, label) => {
-    if (markerRef.current) markerRef.current.remove();
+  const placeMarker = (map, lat, lng, label, mRef) => {
+    if (mRef.current) mRef.current.remove();
     map.setView([lat, lng], 15);
-    markerRef.current = window.L.marker([lat, lng]).addTo(map);
-    if (label) markerRef.current.bindPopup(`<b>${label}</b>`).openPopup();
+    mRef.current = window.L.marker([lat, lng]).addTo(map);
+    if (label) mRef.current.bindPopup(`<b>${label}</b>`).openPopup();
   };
+
+  // Output map: show AO location in the generated weinke
+  useEffect(() => {
+    if (!result || !outputMapRef.current || !window.L) return;
+    const aoObj = aos.find(a => (a.locationName || a.name) === form.ao);
+    const lat = aoObj?.lat;
+    const lng = aoObj?.lon || aoObj?.lng;
+    if (!lat || !lng) return;
+    const timer = setTimeout(() => {
+      if (!outputMapInstanceRef.current) {
+        outputMapInstanceRef.current = window.L.map(outputMapRef.current, { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false }).setView([lat, lng], 15);
+        window.L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(outputMapInstanceRef.current);
+      }
+      outputMapInstanceRef.current.invalidateSize();
+      placeMarker(outputMapInstanceRef.current, lat, lng, form.ao, outputMarkerRef);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [result, aos, form.ao]);
 
   const equipment = ["Coupons / Blocks", "Bodyweight", "Resistance Bands", "Sandbags"];
   const terrains  = ["Hill", "Open Field", "Parking Lot", "Track", "Flat Only"];
@@ -1436,6 +1456,17 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                     ))}
                   </div>
                 </div>
+
+                {/* AO Location */}
+                {form.location && (
+                  <div className="ao-map-container" style={{marginTop:16}}>
+                    <div className="ao-map-label" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                      <span>AO LOCATION</span>
+                      <span style={{fontFamily:"'Barlow',sans-serif",fontSize:12,letterSpacing:0,textTransform:'none',color:'var(--text)'}}>{form.location}</span>
+                    </div>
+                    <div className="ao-map" ref={outputMapRef} style={{height:180}} />
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div className="weinke-actions">
