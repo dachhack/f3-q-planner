@@ -1488,7 +1488,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                     </div>
                   </div>
                   {(form.location || aos.find(a => (a.locationName || a.name) === form.ao)?.lat) && (
-                    <div style={{width:140,minHeight:140,borderRadius:4,overflow:'hidden',border:'1px solid var(--border)',flexShrink:0}}>
+                    <div style={{width:280,height:140,borderRadius:4,overflow:'hidden',border:'1px solid var(--border)',flexShrink:0}}>
                       <div ref={outputMapRef} style={{width:'100%',height:'100%'}} />
                     </div>
                   )}
