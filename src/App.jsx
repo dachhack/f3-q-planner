@@ -784,7 +784,7 @@ export default function F3QPlanner() {
       .then(r => r.json())
       .then(data => setExicon(data))
       .catch(() => {});
-    fetch("/api/generate?f3=map/location/regions")
+    fetch("/api/generate?f3=v1/map/location/regions")
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(data => {
         const raw = Array.isArray(data) ? data : data?.regions || [];
@@ -813,7 +813,7 @@ export default function F3QPlanner() {
     const regionId = regionObj?.id || regionObj?.regionId;
     console.log("[F3] Region selected:", form.region, "→ id:", regionId, "obj:", regionObj);
     if (!regionObj || !regionId) { setAos([]); return; }
-    fetch(`/api/generate?f3=${encodeURIComponent(`map/location/events-and-locations?regionId=${regionId}`)}`)
+    fetch(`/api/generate?f3=${encodeURIComponent(`v1/map/location/events-and-locations?regionId=${regionId}`)}`)
       .then(r => r.json())
       .then(data => {
         console.log("[F3] AO raw response sample:", Array.isArray(data) ? data[0] : data);
@@ -834,24 +834,7 @@ export default function F3QPlanner() {
       .catch(err => console.warn("[F3] AO fetch failed:", err));
   }, [form.region, regions]);
 
-  // Load PAX names when region changes
-  useEffect(() => {
-    if (!form.region) { setPax([]); return; }
-    const regionObj = regions.find(r => r.name === form.region);
-    const regionId = regionObj?.id || regionObj?.regionId;
-    if (!regionObj || !regionId) { setPax([]); return; }
-    fetch(`/api/generate?f3=${encodeURIComponent(`map/location/members?regionId=${regionId}`)}`)
-      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-      .then(data => {
-        const list = Array.isArray(data) ? data : data?.members || data?.pax || [];
-        const names = list
-          .map(m => m.f3Name || m.name || m.nickname || m.f3_name || "")
-          .filter(Boolean)
-          .sort((a, b) => a.localeCompare(b));
-        setPax([...new Set(names)]);
-      })
-      .catch(() => setPax([]));
-  }, [form.region, regions]);
+  // PAX names — no public API endpoint available yet
 
   // Q name autocomplete filter
   useEffect(() => {

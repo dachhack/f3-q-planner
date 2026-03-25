@@ -82,34 +82,7 @@ export default async function handler(req) {
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
     }
-    // Debug mode: try multiple URL patterns to find the right one
-    if (f3path === 'debug') {
-      const specRes = await fetch('https://api.f3nation.com/docs/openapi.json');
-      const spec = await specRes.json();
-      // Extract all endpoint paths
-      const paths = Object.keys(spec.paths || {}).map(p => {
-        const methods = Object.keys(spec.paths[p]);
-        return { path: p, methods };
-      });
-      return new Response(JSON.stringify({ paths }, null, 2), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-      });
-      for (const url of patterns) {
-        try {
-          const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
-          const body = await r.text();
-          results.push({ url, status: r.status, body: body.substring(0, 2000) });
-        } catch (e) {
-          results.push({ url, error: e.message });
-        }
-      }
-      return new Response(JSON.stringify(results, null, 2), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-      });
-    }
-    const allowed = ['map/location/regions', 'map/location/events-and-locations', 'map/location/members'];
+    const allowed = ['v1/map/location/regions', 'v1/map/location/events-and-locations'];
     const basePath = f3path.split('?')[0];
     if (!allowed.includes(basePath)) {
       return new Response(JSON.stringify({ error: 'Path not allowed' }), {
@@ -120,23 +93,11 @@ export default async function handler(req) {
     try {
       const apiUrl = `https://api.f3nation.com/${f3path}`;
       const res = await fetch(apiUrl, {
-        headers: {
-          'Accept': 'application/json, text/plain, */*',
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Origin': 'https://map.f3nation.com',
-          'Referer': 'https://map.f3nation.com/'
-        }
+        headers: { 'Accept': 'application/json' }
       });
       const data = await res.text();
-      // Debug: wrap with status info so we can see what the F3 API returns
-      if (!res.ok) {
-        return new Response(JSON.stringify({ error: `F3 API returned ${res.status}`, url: apiUrl, body: data.substring(0, 500) }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-        });
-      }
       return new Response(data, {
-        status: 200,
+        status: res.status,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=3600' }
       });
     } catch (err) {
