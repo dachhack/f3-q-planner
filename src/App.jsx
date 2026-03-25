@@ -879,7 +879,7 @@ export default function F3QPlanner() {
     const timer = setTimeout(() => {
       if (!mapInstanceRef.current) {
         mapInstanceRef.current = window.L.map(el, { zoomControl: true, attributionControl: false }).setView([35.2, -80.8], 13);
-        window.L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(mapInstanceRef.current);
+        window.L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(mapInstanceRef.current);
       }
       mapInstanceRef.current.invalidateSize();
       const map = mapInstanceRef.current;
