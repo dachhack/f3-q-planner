@@ -790,7 +790,6 @@ export default function F3QPlanner() {
         // oRPC wraps response in {json: {regionsWithLocation: [...]}}
         const raw = data?.json?.regionsWithLocation || data?.regionsWithLocation || (Array.isArray(data) ? data : []);
         if (!Array.isArray(raw) || raw.length === 0) throw new Error("No regions in response");
-        console.log("[F3] Regions count:", raw.length, "sample:", raw[0]);
         setRegions(raw.sort((a, b) => (a.name || "").localeCompare(b.name || "")));
       })
       .catch(err => {
@@ -818,7 +817,6 @@ export default function F3QPlanner() {
           }
           return d;
         });
-        console.log("[F3] AO count:", normalized.length, "sample:", normalized[0]);
         setAllAos(normalized);
       })
       .catch(err => console.warn("[F3] AO fetch failed:", err.message));
@@ -830,15 +828,12 @@ export default function F3QPlanner() {
     fetch("/api/generate?f3=v1/map/location/locationIdToRegionNameLookup")
       .then(r => r.json())
       .then(data => {
-        console.log("[F3] Lookup raw:", JSON.stringify(data).substring(0, 500));
-        // Unwrap all possible oRPC nesting
+        // oRPC wraps: {json: {lookup: {locationId: "regionName", ...}}}
         let lookup = data?.json?.locationIdToRegionNameLookup || data?.json || data || {};
-        // If it's still an object with a single key containing the real data, unwrap further
         const keys = Object.keys(lookup);
         if (keys.length === 1 && typeof lookup[keys[0]] === 'object' && !Array.isArray(lookup[keys[0]])) {
           lookup = lookup[keys[0]];
         }
-        console.log("[F3] Location→Region lookup keys:", Object.keys(lookup).length, "sample entries:", Object.entries(lookup).slice(0, 3));
         setLocToRegion(lookup);
       })
       .catch(() => {});
@@ -847,24 +842,18 @@ export default function F3QPlanner() {
   // Filter AOs when region changes
   useEffect(() => {
     if (!form.region || allAos.length === 0) { setAos([]); return; }
-    const regionObj = regions.find(r => r.name === form.region);
-    console.log("[F3] Region selected:", form.region, "obj:", regionObj);
     // Filter AOs using location→region name lookup
     let filtered = allAos;
     if (Object.keys(locToRegion).length > 0) {
-      const sampleAo = allAos[0];
-      console.log("[F3] Filter debug — region:", form.region, "sampleAO id:", sampleAo?.id, "lookup[id]:", sampleAo ? locToRegion[String(sampleAo.id)] : "n/a");
-      // Try exact match first, then case-insensitive/partial
       filtered = allAos.filter(a => locToRegion[String(a.id)] === form.region);
       if (filtered.length === 0) {
-        // Region names may differ — match case-insensitively or with/without "F3" prefix
+        // Fuzzy match: strip "F3" prefix, case-insensitive
         const regionLower = form.region.toLowerCase().replace(/^f3\s+/, '');
         filtered = allAos.filter(a => {
           const lookupName = (locToRegion[String(a.id)] || '').toLowerCase().replace(/^f3\s+/, '');
           return lookupName === regionLower;
         });
       }
-      console.log("[F3] Filtered AOs:", filtered.length, "of", allAos.length);
     }
     if (filtered.length === 0) filtered = allAos; // fallback to all
     const unique = [...new Map(filtered.map(d => [d.locationName || d.name, d])).values()]
