@@ -814,11 +814,12 @@ export default function F3QPlanner() {
     console.log("[F3] Region selected:", form.region, "→ id:", regionId, "obj:", regionObj);
     if (!regionObj || !regionId) { setAos([]); return; }
     fetch("/api/generate?f3=v1/map/location/eventsAndLocations")
-      .then(r => r.json())
+      .then(r => { console.log("[F3] AO fetch status:", r.status); return r.json(); })
       .then(data => {
-        console.log("[F3] AO raw response sample:", Array.isArray(data) ? data[0] : data);
+        console.log("[F3] AO raw response type:", typeof data, "isArray:", Array.isArray(data), "keys:", data && typeof data === 'object' ? Object.keys(data).slice(0, 10) : 'n/a');
+        console.log("[F3] AO raw response sample:", Array.isArray(data) ? data[0] : JSON.stringify(data).substring(0, 500));
         const raw = Array.isArray(data) ? data : data?.locations || data?.data || [];
-        if (!Array.isArray(raw)) return;
+        if (!Array.isArray(raw)) { console.warn("[F3] AO data is not an array"); return; }
         // API may return tuples: [id, name, logoUrl, lat, lon, fullAddress, events[]]
         const normalized = raw.map(d => {
           if (Array.isArray(d)) {
