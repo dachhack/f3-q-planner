@@ -995,30 +995,64 @@ export default function F3QPlanner() {
     const uniqueCount = uniqueNames.size;
     const repeatCount = totalExercises - uniqueCount;
 
-    // Muscle group categorization
-    const categories = {
-      "Chest": ["merkin","diamond merkin","wide merkin","hand release merkin","carolina dry dock","derkin","irkin","mike tyson","peter parker merkin"],
-      "Shoulders": ["overhead press","shoulder tap","blocktanamo","military press","arnold press","lateral raise","front raise","michael phelps","seal clap"],
-      "Arms": ["curl","tricep extension","skull crusher","dip","hammer curl","diamond merkin"],
-      "Back": ["bent over row","coupon row","superman","reverse fly","lawn mower","upright row","pull-up"],
-      "Core": ["lbc","freddie mercury","american hammer","flutter kick","dolly","rosalita","pickle pounder","big boy sit-up","j-lo","hello dolly","dying cockroach","boat canoe","wwii","heels to heaven","penguin","pretzel crunch"],
-      "Abs (Plank)": ["plank","side plank","peter parker plank","plank jack","plank up-down","shoulder tap plank","body saw"],
-      "Quads": ["squat","jump squat","lunge","split squat","bonnie blair","box jump","step-up","sumo squat","pistol squat","goblet squat","air squat","smurf jack"],
-      "Glutes / Hams": ["monkey humper","deadlift","good morning","fire hydrant","donkey kick","hip thrust","glute bridge","single leg deadlift"],
-      "Calves": ["calf raise","bunny hop","seal jack","jump rope"],
-      "Isometric": ["wall sit","al gore","balls to the wall","people's chair","hold","static"],
-      "Cardio": ["ssh","high knee","butt kick","mountain climber","jumping jack","star jump","run","mosey","bear crawl","broad jump","tuck jump","lateral shuffle","karaoke","sprint"],
-      "Full Body": ["burpee","man maker","thruster","blockee","clean and press","turkish get-up","devil press","blockee"]
+    // Muscle group categorization — hybrid: exicon tags + keyword matching
+    // Map exicon tags to our display groups
+    const tagToGroup = { "Arms": "Arms", "Core": "Core", "Legs": "Legs", "Cardio": "Cardio", "Full Body": "Full Body", "Run": "Cardio", "Mary": "Core", "Coupon": "Coupon Work", "warmup": "Warmup", "Routine": "Full Body", "Music": null };
+    // Build exicon name→group lookup
+    const exiconGroupMap = {};
+    for (const ex of exicon) {
+      const name = ex.name.toLowerCase().trim();
+      for (const tag of (ex.tags || [])) {
+        const group = tagToGroup[tag];
+        if (group) { exiconGroupMap[name] = group; break; }
+      }
+    }
+    // Keyword fallback for exercises not in exicon or untagged
+    const keywordGroups = {
+      "Chest": ["merkin","dry dock","derkin","irkin","mike tyson","chest press","bench press","hand release"],
+      "Shoulders": ["overhead press","shoulder","blocktanamo","military press","arnold","lateral raise","front raise","michael phelps","seal clap","scarecrow"],
+      "Arms": ["curl","tricep","skull crusher","dip","hammer curl","diamond merkin","kickback"],
+      "Back": ["row","superman","reverse fly","lawn mower","pull-up","pull up","pullup","deadlift","good morning","bent over"],
+      "Core": ["lbc","freddie","mercury","american hammer","flutter","dolly","rosalita","pickle","big boy","sit-up","situp","j-lo","hello dolly","cockroach","boat","canoe","wwii","heels to heaven","penguin","pretzel","crunch","v-up","leg raise","wiper","russian twist","mason twist"],
+      "Plank": ["plank","peter parker","body saw"],
+      "Legs": ["squat","lunge","split squat","bonnie blair","bobby hurley","box jump","step-up","step up","sumo","pistol","goblet","monkey humper","wall sit","al gore","people's chair","calf raise","hip thrust","glute bridge","fire hydrant","donkey kick","smurf","chair"],
+      "Cardio": ["ssh","side straddle","high knee","butt kick","mountain climber","jumping jack","star jump","run","mosey","sprint","shuffle","karaoke","broad jump","tuck jump","jump rope","seal jack","skater","burner"],
+      "Full Body": ["burpee","man maker","thruster","blockee","clean and press","turkish get-up","devil press","cindy","murph"],
+      "Coupon Work": ["coupon","block","ruck","sandbag","kettlebell","kb ","farmer","carry","uhaul","drag"]
+    };
+    const classifyExercise = (name) => {
+      const lower = (name || "").toLowerCase().trim();
+      // 1. Check exicon tag lookup
+      if (exiconGroupMap[lower]) return exiconGroupMap[lower];
+      // 2. Check partial exicon matches
+      for (const [eName, group] of Object.entries(exiconGroupMap)) {
+        if (lower.includes(eName) || eName.includes(lower)) return group;
+      }
+      // 3. Keyword fallback
+      for (const [group, keywords] of Object.entries(keywordGroups)) {
+        if (keywords.some(k => lower.includes(k))) return group;
+      }
+      // 4. Check exicon descriptions for clues
+      const exEntry = exicon.find(e => e.name.toLowerCase().trim() === lower);
+      if (exEntry?.desc) {
+        const desc = exEntry.desc.toLowerCase();
+        if (desc.includes("merkin") || desc.includes("push-up") || desc.includes("pushup") || desc.includes("chest")) return "Chest";
+        if (desc.includes("plank")) return "Plank";
+        if (desc.includes("squat") || desc.includes("lunge") || desc.includes("legs")) return "Legs";
+        if (desc.includes("core") || desc.includes("abs") || desc.includes("sit-up") || desc.includes("crunch")) return "Core";
+        if (desc.includes("run") || desc.includes("sprint") || desc.includes("cardio") || desc.includes("jump")) return "Cardio";
+        if (desc.includes("curl") || desc.includes("press") || desc.includes("arm")) return "Arms";
+        if (desc.includes("row") || desc.includes("back") || desc.includes("pull")) return "Back";
+      }
+      return "Other";
     };
     const groupCounts = {};
-    for (const [group, keywords] of Object.entries(categories)) {
-      groupCounts[group] = allExercises.filter(e => {
-        const name = (e.name || "").toLowerCase();
-        return keywords.some(k => name.includes(k));
-      }).length;
+    const groupOrder = ["Chest","Shoulders","Arms","Back","Core","Plank","Legs","Cardio","Full Body","Coupon Work","Warmup","Other"];
+    for (const g of groupOrder) groupCounts[g] = 0;
+    for (const ex of allExercises) {
+      const group = classifyExercise(ex.name);
+      groupCounts[group] = (groupCounts[group] || 0) + 1;
     }
-    const categorized = Object.values(groupCounts).reduce((a, b) => a + b, 0);
-    groupCounts["Other"] = totalExercises - categorized;
 
     // Duration parsing
     const blockDurations = r.blocks.map(b => {
@@ -1825,9 +1859,10 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                               <div style={{height:16,background:'var(--panel)',borderRadius:2,overflow:'hidden'}}>
                                 <div style={{width:`${(count/maxGroup)*100}%`,height:'100%',background: ({
                                   'Chest':'var(--steel)','Shoulders':'#5B9BD5','Arms':'#7EB8DA','Back':'#2E86C1',
-                                  'Core':'var(--gold)','Abs (Plank)':'#D4AC0D',
-                                  'Quads':'var(--red)','Glutes / Hams':'#E74C3C','Calves':'#F1948A','Isometric':'#CB4335',
-                                  'Cardio':'var(--success)','Full Body':'#9B59B6'
+                                  'Core':'var(--gold)','Plank':'#D4AC0D',
+                                  'Legs':'var(--red)',
+                                  'Cardio':'var(--success)','Full Body':'#9B59B6',
+                                  'Coupon Work':'#E67E22','Warmup':'#95A5A6'
                                 })[group] || 'var(--muted)',borderRadius:2,transition:'width 0.3s'}} />
                               </div>
                               <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,color:'var(--muted)',textAlign:'right'}}>{count}</div>
