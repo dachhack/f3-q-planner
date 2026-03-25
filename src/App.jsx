@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, HeadingLevel, BorderStyle } from "docx";
+import { saveAs } from "file-saver";
 
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:ital,wght@0,400;0,600;1,400&display=swap');
@@ -912,6 +914,158 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
     window.print();
   };
 
+  const downloadDocx = async () => {
+    if (!result) return;
+
+    const noBorders = {
+      top: { style: BorderStyle.NONE, size: 0 },
+      bottom: { style: BorderStyle.NONE, size: 0 },
+      left: { style: BorderStyle.NONE, size: 0 },
+      right: { style: BorderStyle.NONE, size: 0 },
+    };
+
+    const sections = [];
+
+    // Title
+    sections.push(
+      new Paragraph({
+        children: [new TextRun({ text: "F3 WEINKE", size: 20, color: "888888", font: "Arial" })],
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: `🪖 ${result.theme}`, size: 40, bold: true, font: "Arial" })],
+        heading: HeadingLevel.HEADING_1,
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: result.tagline, italics: true, size: 22, color: "666666", font: "Arial" })],
+        spacing: { after: 100 },
+      }),
+      new Paragraph({
+        children: [
+          new TextRun({ text: `Q: ${form.q || "Q"}  ·  AO: ${form.ao || "AO"}  ·  Date: ${form.date || "TBD"}  ·  Time: ${form.time}`, size: 20, color: "444444", font: "Arial" }),
+        ],
+        spacing: { after: 300 },
+      }),
+    );
+
+    // Blocks
+    result.blocks?.forEach(block => {
+      sections.push(
+        new Paragraph({
+          children: [
+            new TextRun({ text: `${block.time}  `, size: 22, bold: true, color: "C0392B", font: "Arial" }),
+            new TextRun({ text: `${block.name}`, size: 26, bold: true, font: "Arial" }),
+            new TextRun({ text: `  ·  ${block.themeLabel}  ·  ${block.duration}`, size: 20, color: "666666", font: "Arial" }),
+          ],
+          spacing: { before: 300, after: 100 },
+          shading: { fill: "F0F0F0" },
+        }),
+      );
+      block.exercises?.forEach(ex => {
+        sections.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: `  ${ex.name}`, size: 21, bold: true, font: "Arial" }),
+              new TextRun({ text: ex.cadence ? `  [${ex.cadence}]` : "", size: 18, color: "4A7FA5", font: "Arial" }),
+              new TextRun({ text: `    ${ex.reps}`, size: 20, color: "C9A84C", font: "Arial" }),
+            ],
+            spacing: { after: 40 },
+          }),
+        );
+        if (ex.note) {
+          sections.push(
+            new Paragraph({
+              children: [new TextRun({ text: `      ${ex.note}`, size: 18, italics: true, color: "888888", font: "Arial" })],
+              spacing: { after: 60 },
+            }),
+          );
+        }
+      });
+    });
+
+    // Pace Guide
+    sections.push(
+      new Paragraph({
+        children: [new TextRun({ text: "PACE GUIDE", size: 24, bold: true, font: "Arial" })],
+        spacing: { before: 400, after: 150 },
+      }),
+    );
+    if (result.paceGuide?.length) {
+      const rows = result.paceGuide.map(row =>
+        new TableRow({
+          children: [
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: row.segment, size: 20, font: "Arial" })] })], borders: noBorders, width: { size: 60, type: WidthType.PERCENTAGE } }),
+            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: row.time, size: 20, bold: true, color: "C0392B", font: "Arial" })] })], borders: noBorders, width: { size: 40, type: WidthType.PERCENTAGE } }),
+          ],
+        })
+      );
+      sections.push(new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }));
+    }
+
+    // Closing Messages
+    sections.push(
+      new Paragraph({
+        children: [new TextRun({ text: "CLOSING MESSAGE OPTIONS", size: 24, bold: true, font: "Arial" })],
+        spacing: { before: 400, after: 150 },
+      }),
+    );
+    [["Faith-Based", result.closingMessages?.faith], ["Secular", result.closingMessages?.secular], ["Themed", result.closingMessages?.themed]].forEach(([label, text]) => {
+      if (text) {
+        sections.push(
+          new Paragraph({ children: [new TextRun({ text: `${label}:`, size: 20, bold: true, font: "Arial" })], spacing: { before: 100 } }),
+          new Paragraph({ children: [new TextRun({ text, size: 20, italics: true, color: "444444", font: "Arial" })], spacing: { after: 100 } }),
+        );
+      }
+    });
+
+    // Playlist
+    sections.push(
+      new Paragraph({
+        children: [new TextRun({ text: "PLAYLIST", size: 24, bold: true, font: "Arial" })],
+        spacing: { before: 400, after: 150 },
+      }),
+    );
+    result.playlist?.forEach(section => {
+      sections.push(
+        new Paragraph({
+          children: [new TextRun({ text: section.section, size: 22, bold: true, color: "4A7FA5", font: "Arial" })],
+          spacing: { before: 200, after: 80 },
+        }),
+      );
+      section.tracks.forEach(track => {
+        sections.push(
+          new Paragraph({
+            children: [
+              new TextRun({ text: `${track.title}`, size: 20, bold: true, font: "Arial" }),
+              new TextRun({ text: ` — ${track.artist}`, size: 20, color: "666666", font: "Arial" }),
+              new TextRun({ text: `  (${track.duration})`, size: 18, color: "888888", font: "Arial" }),
+            ],
+            spacing: { after: 40 },
+          }),
+        );
+      });
+    });
+
+    // Pre-Blast
+    sections.push(
+      new Paragraph({
+        children: [new TextRun({ text: "PRE-BLAST", size: 24, bold: true, font: "Arial" })],
+        spacing: { before: 400, after: 150 },
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: result.preBlast, size: 20, font: "Arial" })],
+      }),
+    );
+
+    const doc = new Document({
+      sections: [{ children: sections }],
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const filename = `${(result.theme || "beatdown").replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}-weinke.docx`;
+    saveAs(blob, filename);
+  };
+
   useEffect(() => {
     if ((result || loading) && outputRef.current) {
       outputRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1118,6 +1272,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                 {/* Actions */}
                 <div className="weinke-actions">
                   <button className="btn-pdf" onClick={downloadPdf}>📄 Download PDF</button>
+                  <button className="btn-pdf" onClick={downloadDocx}>📝 Download .docx</button>
                 </div>
 
                 {/* Tabs */}
