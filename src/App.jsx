@@ -787,16 +787,11 @@ export default function F3QPlanner() {
     fetch("/api/generate?f3=v1/map/location/regionsWithLocation")
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
-        console.log("[F3] Regions raw type:", typeof data, "isArray:", Array.isArray(data), "sample:", JSON.stringify(data).substring(0, 300));
-        const raw = Array.isArray(data) ? data : data?.regions || data?.data || [];
+        // oRPC wraps response in {json: {regionsWithLocation: [...]}}
+        const raw = data?.json?.regionsWithLocation || data?.regionsWithLocation || (Array.isArray(data) ? data : []);
         if (!Array.isArray(raw) || raw.length === 0) throw new Error("No regions in response");
-        // Normalize: API may return objects or tuples
-        const list = raw.map(r => {
-          if (Array.isArray(r)) return { id: r[0], name: r[1], location: r[2] || "" };
-          return r;
-        });
-        console.log("[F3] Regions parsed sample:", list[0]);
-        setRegions(list.sort((a, b) => (a.name || "").localeCompare(b.name || "")));
+        console.log("[F3] Regions count:", raw.length, "sample:", raw[0]);
+        setRegions(raw.sort((a, b) => (a.name || "").localeCompare(b.name || "")));
       })
       .catch(err => {
         console.warn("[F3] Regions API failed:", err.message, "— using static fallback");
@@ -813,12 +808,13 @@ export default function F3QPlanner() {
     fetch("/api/generate?f3=v1/map/location/eventsAndLocations")
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(data => {
-        console.log("[F3] AO raw type:", typeof data, "isArray:", Array.isArray(data), "sample:", JSON.stringify(data).substring(0, 300));
-        const raw = Array.isArray(data) ? data : data?.locations || data?.data || [];
+        // oRPC wraps response in {json: [...]}
+        const raw = data?.json || (Array.isArray(data) ? data : []);
         if (!Array.isArray(raw)) { console.warn("[F3] AO data not array"); return; }
+        // Tuples: [id, name, logoUrl, lat, lon, fullAddress, events[]]
         const normalized = raw.map(d => {
           if (Array.isArray(d)) {
-            return { id: d[0], locationName: d[1], lat: d[3], lon: d[4], locationAddress: d[5], regionId: d[6] };
+            return { id: d[0], locationName: d[1], lat: d[3], lon: d[4], locationAddress: d[5] };
           }
           return d;
         });
@@ -828,24 +824,34 @@ export default function F3QPlanner() {
       .catch(err => console.warn("[F3] AO fetch failed:", err.message));
   }, []);
 
+  // Load location-to-region lookup on mount
+  const [locToRegion, setLocToRegion] = useState({});
+  useEffect(() => {
+    fetch("/api/generate?f3=v1/map/location/location-id-to-region-name-lookup")
+      .then(r => r.json())
+      .then(data => {
+        const lookup = data?.json || data || {};
+        console.log("[F3] Location→Region lookup keys:", Object.keys(lookup).length);
+        setLocToRegion(lookup);
+      })
+      .catch(() => {});
+  }, []);
+
   // Filter AOs when region changes
   useEffect(() => {
-    if (!form.region) { setAos([]); return; }
+    if (!form.region || allAos.length === 0) { setAos([]); return; }
     const regionObj = regions.find(r => r.name === form.region);
     console.log("[F3] Region selected:", form.region, "obj:", regionObj);
-    if (allAos.length > 0 && regionObj?.id) {
-      // Filter by region ID if available
-      const filtered = allAos.filter(a => a.regionId === regionObj.id);
-      const unique = [...new Map(filtered.map(d => [d.locationName || d.name, d])).values()]
-        .sort((a, b) => (a.locationName || a.name || "").localeCompare(b.locationName || b.name || ""));
-      setAos(unique.length > 0 ? unique : allAos);
-    } else {
-      // Show all AOs if we can't filter by region
-      const unique = [...new Map(allAos.map(d => [d.locationName || d.name, d])).values()]
-        .sort((a, b) => (a.locationName || a.name || "").localeCompare(b.locationName || b.name || ""));
-      setAos(unique);
+    // Filter AOs using location→region name lookup
+    let filtered = allAos;
+    if (Object.keys(locToRegion).length > 0) {
+      filtered = allAos.filter(a => locToRegion[String(a.id)] === form.region);
     }
-  }, [form.region, regions, allAos]);
+    if (filtered.length === 0) filtered = allAos; // fallback to all
+    const unique = [...new Map(filtered.map(d => [d.locationName || d.name, d])).values()]
+      .sort((a, b) => (a.locationName || a.name || "").localeCompare(b.locationName || b.name || ""));
+    setAos(unique);
+  }, [form.region, regions, allAos, locToRegion]);
 
   // PAX names — no public API endpoint available yet
 
