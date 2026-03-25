@@ -1466,21 +1466,20 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                   </div>
                 </div>
 
-                {/* AO Location */}
-                {(form.location || aos.find(a => (a.locationName || a.name) === form.ao)?.lat) && (
-                  <div className="ao-map-container" style={{marginTop:16}}>
-                    <div className="ao-map-label" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                      <span>AO LOCATION</span>
-                      <span style={{fontFamily:"'Barlow',sans-serif",fontSize:12,letterSpacing:0,textTransform:'none',color:'var(--text)'}}>{form.location || form.ao}</span>
+                {/* Actions + Map */}
+                <div style={{display:'flex',alignItems:'stretch',gap:16,marginTop:16}}>
+                  <div style={{flex:1}}>
+                    {form.location && <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase',marginBottom:6}}>📍 {form.location}</div>}
+                    <div className="weinke-actions" style={{marginTop:0}}>
+                      <button className="btn-pdf" onClick={downloadPdf}>📄 Download PDF</button>
+                      <button className="btn-pdf" onClick={downloadDocx}>📝 Download .docx</button>
                     </div>
-                    <div className="ao-map" ref={outputMapRef} style={{height:180}} />
                   </div>
-                )}
-
-                {/* Actions */}
-                <div className="weinke-actions">
-                  <button className="btn-pdf" onClick={downloadPdf}>📄 Download PDF</button>
-                  <button className="btn-pdf" onClick={downloadDocx}>📝 Download .docx</button>
+                  {(form.location || aos.find(a => (a.locationName || a.name) === form.ao)?.lat) && (
+                    <div style={{width:140,minHeight:140,borderRadius:4,overflow:'hidden',border:'1px solid var(--border)',flexShrink:0}}>
+                      <div ref={outputMapRef} style={{width:'100%',height:'100%'}} />
+                    </div>
+                  )}
                 </div>
 
                 {/* Tabs */}
