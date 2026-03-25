@@ -810,7 +810,14 @@ export default function F3QPlanner() {
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data)) {
-          const unique = [...new Map(data.map(d => [d.locationName || d.name, d])).values()]
+          // API returns tuples: [id, name, logoUrl, lat, lon, fullAddress, events[]]
+          const normalized = data.map(d => {
+            if (Array.isArray(d)) {
+              return { id: d[0], locationName: d[1], lat: d[3], lon: d[4], locationAddress: d[5] };
+            }
+            return d; // already an object (fallback)
+          });
+          const unique = [...new Map(normalized.map(d => [d.locationName || d.name, d])).values()]
             .sort((a, b) => (a.locationName || a.name || "").localeCompare(b.locationName || b.name || ""));
           setAos(unique);
         }
@@ -858,8 +865,8 @@ export default function F3QPlanner() {
       const map = mapInstanceRef.current;
       // Check if AO has lat/lng from API data
       const aoObj = aos.find(a => (a.locationName || a.name) === form.ao);
-      const lat = aoObj?.lat || aoObj?.latitude || aoObj?.locationLat;
-      const lng = aoObj?.lng || aoObj?.longitude || aoObj?.locationLng || aoObj?.lon;
+      const lat = aoObj?.lat || aoObj?.latitude;
+      const lng = aoObj?.lon || aoObj?.lng || aoObj?.longitude;
       if (lat && lng) {
         placeMarker(map, lat, lng, form.ao);
       } else {
