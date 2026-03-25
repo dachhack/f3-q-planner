@@ -1,6 +1,5 @@
 {
   "rewrites": [
-    { "source": "/f3api/:path*", "destination": "https://api.f3nation.com/:path*" },
     { "source": "/api/generate", "destination": "/api/generate" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]

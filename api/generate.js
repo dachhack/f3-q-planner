@@ -66,10 +66,45 @@ export default async function handler(req) {
       status: 204,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
       }
     });
+  }
+
+  // GET = F3 API proxy
+  if (req.method === 'GET') {
+    const url = new URL(req.url);
+    const f3path = url.searchParams.get('f3');
+    if (!f3path) {
+      return new Response(JSON.stringify({ error: 'Missing f3 parameter' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
+    const allowed = ['map/location/regions', 'map/location/events-and-locations', 'map/location/members'];
+    const basePath = f3path.split('?')[0];
+    if (!allowed.includes(basePath)) {
+      return new Response(JSON.stringify({ error: 'Path not allowed' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
+    try {
+      const res = await fetch(`https://api.f3nation.com/${f3path}`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      const data = await res.text();
+      return new Response(data, {
+        status: res.status,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=3600' }
+      });
+    } catch (err) {
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: 502,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
   }
 
   if (req.method !== 'POST') {
