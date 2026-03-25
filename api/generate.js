@@ -84,19 +84,14 @@ export default async function handler(req) {
     }
     // Debug mode: try multiple URL patterns to find the right one
     if (f3path === 'debug') {
-      // Fetch the docs page and extract the OpenAPI spec URL
-      const docsRes = await fetch('https://api.f3nation.com/docs');
-      const docsHtml = await docsRes.text();
-      // Look for spec/url references in the HTML
-      const specMatches = docsHtml.match(/(?:url|spec|data-url|content)\s*[:=]\s*["']([^"']*(?:openapi|swagger|spec|json|yaml)[^"']*)/gi) || [];
-      const scriptContent = docsHtml.match(/<script[^>]*>([\s\S]*?)<\/script>/gi) || [];
-      // Get last 3000 chars of the page (where script tags usually are)
-      const tail = docsHtml.slice(-3000);
-      return new Response(JSON.stringify({
-        specMatches,
-        scriptTags: scriptContent.length,
-        tailOfPage: tail,
-      }, null, 2), {
+      const specRes = await fetch('https://api.f3nation.com/docs/openapi.json');
+      const spec = await specRes.json();
+      // Extract all endpoint paths
+      const paths = Object.keys(spec.paths || {}).map(p => {
+        const methods = Object.keys(spec.paths[p]);
+        return { path: p, methods };
+      });
+      return new Response(JSON.stringify({ paths }, null, 2), {
         status: 200,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
