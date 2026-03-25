@@ -41,8 +41,10 @@ const STYLES = `
     max-width: 900px;
     margin: 0 auto;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
+    justify-content: center;
     gap: 24px;
+    text-align: center;
   }
   .header-badge {
     background: var(--gold);
