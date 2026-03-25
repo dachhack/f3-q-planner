@@ -15,7 +15,7 @@ const STYLES = `
     --red:     #C0392B;
     --steel:   #4A7FA5;
     --text:    #E8EAF0;
-    --muted:   #8892A4;
+    --muted:   #A8B2C4;
     --success: #2ECC71;
   }
 
@@ -161,7 +161,7 @@ const STYLES = `
     border: 1px solid var(--border);
     color: var(--text);
     font-family: 'Barlow', sans-serif;
-    font-size: 14px;
+    font-size: 15px;
     padding: 10px 12px;
     outline: none;
     transition: border-color 0.2s;
@@ -170,6 +170,7 @@ const STYLES = `
     border-color: var(--gold);
   }
   .form-select { cursor: pointer; }
+  .form-input::placeholder, .form-textarea::placeholder { color: #6B7588; }
   .form-textarea { resize: vertical; min-height: 80px; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
