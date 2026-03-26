@@ -794,6 +794,48 @@ export default function F3QPlanner() {
     localStorage.setItem("f3_saved_beatdowns", JSON.stringify(updated));
   };
 
+  const clearAllBeatdowns = () => {
+    if (!confirm("Delete all saved beatdowns? This cannot be undone.")) return;
+    setSavedBeatdowns([]);
+    localStorage.removeItem("f3_saved_beatdowns");
+  };
+
+  const [shareCopied, setShareCopied] = useState(false);
+  const shareBeatdown = () => {
+    if (!result) return;
+    try {
+      const shareData = { form: {...form}, result };
+      const json = JSON.stringify(shareData);
+      const encoded = btoa(unescape(encodeURIComponent(json)));
+      const url = `${window.location.origin}${window.location.pathname}#share=${encoded}`;
+      navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch (e) {
+      // If URL is too long, fall back to copying just the weinke text
+      const text = `${result.theme}\n${result.tagline}\nAO: ${form.ao} | Q: ${form.q} | ${form.date}\n\n` +
+        (result.blocks || []).map(b => `${b.name} (${b.duration})\n` + (b.exercises || []).map(e => `  ${e.name} — ${e.reps}`).join("\n")).join("\n\n");
+      navigator.clipboard.writeText(text);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    }
+  };
+
+  // Load shared beatdown from URL hash on mount
+  useEffect(() => {
+    try {
+      const hash = window.location.hash;
+      if (hash.startsWith("#share=")) {
+        const encoded = hash.slice(7);
+        const json = decodeURIComponent(escape(atob(encoded)));
+        const data = JSON.parse(json);
+        if (data.form) setForm(data.form);
+        if (data.result) setResult(data.result);
+        window.location.hash = "";
+      }
+    } catch (e) { /* ignore bad share links */ }
+  }, []);
+
   const generateBackblast = () => {
     if (!result) return "";
     const allEx = result.blocks?.flatMap(b => (b.exercises || []).map(e => ({ ...e, block: b.name }))) || [];
@@ -1781,6 +1823,10 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                         <button onClick={() => deleteBeatdown(b.id)} style={{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:16,padding:'4px 8px'}} title="Delete">x</button>
                       </div>
                     ))}
+                    <button onClick={clearAllBeatdowns}
+                      style={{marginTop:4,padding:'8px',background:'none',border:'1px solid var(--border)',color:'var(--red)',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:2,textTransform:'uppercase',borderRadius:4,transition:'all 0.15s'}}>
+                      CLEAR ALL SAVED
+                    </button>
                   </div>
                 )}
               </div>
@@ -1844,6 +1890,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                       <button className="btn-pdf" onClick={downloadPdf}>📄 PDF</button>
                       <button className="btn-pdf" onClick={downloadDocx}>📝 .docx</button>
                       <button className="btn-pdf" onClick={saveBeatdown} style={{borderColor:'var(--success)',color:'var(--success)'}}>💾 Save</button>
+                      <button className="btn-pdf" onClick={shareBeatdown} style={{borderColor:'var(--steel)',color:'var(--steel)'}}>{shareCopied ? "✓ Link Copied" : "🔗 Share"}</button>
                     </div>
                   </div>
                   {(form.location || aos.find(a => (a.locationName || a.name) === form.ao)?.lat) && (
