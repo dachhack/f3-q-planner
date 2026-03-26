@@ -1003,20 +1003,20 @@ export default function F3QPlanner() {
     // Muscle group categorization — pre-classify ALL exicon exercises
     // Description keyword patterns (checked against exercise descriptions)
     const descPatterns = {
-      "Chest": /\b(merkin|push[-\s]?up|pushup|chest|pec|press.*floor|bench)\b/i,
-      "Shoulders": /\b(shoulder|overhead|press(?!.*chest)|military|delt|lateral raise|front raise|arnold)\b/i,
-      "Arms": /\b(curl|bicep|tricep|skull crush|dip(?!.*plank)|kickback|hammer curl|arm\b)\b/i,
-      "Back": /\b(row|lat |pull[-\s]?up|pullup|superman|reverse fly|lawn mower|deadlift|back(?!\s*pack)|bent.?over)\b/i,
+      "Chest": /\b(merkin|push[-\s]?up|pushup|chest|pec|press.*floor|bench|chest press|coupon press)\b/i,
+      "Shoulders": /\b(shoulder|overhead|press(?!.*(chest|floor|bench|coupon))|military|delt|lateral raise|front raise|arnold|blocktanamo)\b/i,
+      "Arms": /\b(curl|bicep|tricep|skull crush|dip(?!.*plank)|kickback|hammer curl|arm\b|coupon curl)\b/i,
+      "Back": /\b(row|lat |pull[-\s]?up|pullup|superman|reverse fly|lawn mower|deadlift|back(?!\s*pack)|bent.?over|coupon row)\b/i,
       "Core": /\b(core|abs|sit[-\s]?up|situp|crunch|oblique|flutter|lbc|v[-\s]?up|twist|scissor|leg raise|heels|wiper|freddie|mercury|american hammer|dolly|rosalita|pickle|j-lo|cockroach|boat|canoe|wwii|penguin|pretzel|mason)\b/i,
       "Plank": /\b(plank|peter parker(?!.*merkin)|body saw|hover)\b/i,
-      "Legs": /\b(squat|lunge|leg(?!.*raise)|calf|calves|step[-\s]?up|box jump|quad|hamstring|glute|hip thrust|bridge|wall sit|al gore|chair|monkey hump|fire hydrant|donkey|pistol|goblet|sumo|split squat|bonnie|bobby hurley|smurf)\b/i,
-      "Cardio": /\b(run|sprint|jog|mosey|ssh|side straddle|jumping jack|high knee|butt kick|mountain climb|burner|shuffle|karaoke|broad jump|tuck jump|jump rope|seal jack|skater|bear crawl|indian run|lap|star jump)\b/i,
+      "Legs": /\b(squat|lunge|leg(?!.*raise)|calf|calves|step[-\s]?up|box jump|quad|hamstring|glute|hip thrust|bridge|wall sit|al gore|chair|monkey hump|fire hydrant|donkey|pistol|goblet|sumo|split squat|bonnie|bobby hurley|smurf|farmer.*carry|carry|uhaul|ruck|zamperini)\b/i,
+      "Cardio": /\b(run|sprint|jog|mosey|ssh|side straddle|jumping jack|high knee|butt kick|mountain climb|burner|shuffle|karaoke|broad jump|tuck jump|jump rope|seal jack|skater|bear crawl|indian run|lap|star jump|drag)\b/i,
       "Full Body": /\b(burpee|man.?maker|thruster|blockee|clean.?and.?press|turkish|devil press|cindy|murph)\b/i,
-      "Coupon Work": /\b(coupon|block(?!.*blockee)|ruck|sandbag|kettlebell|\bkb\b|farmer|carry|uhaul|drag|weight|heavy)\b/i,
     };
     // Build a comprehensive lookup: exercise name → group
     const exGroupLookup = {};
-    const tagToGroup = { "Arms": "Arms", "Core": "Core", "Legs": "Legs", "Cardio": "Cardio", "Full Body": "Full Body", "Run": "Cardio", "Mary": "Core", "Coupon": "Coupon Work", "warmup": "Warmup", "Routine": "Full Body" };
+    // Map exicon tags to groups — skip "Coupon" tag so coupon exercises get classified by actual muscle group
+    const tagToGroup = { "Arms": "Arms", "Core": "Core", "Legs": "Legs", "Cardio": "Cardio", "Full Body": "Full Body", "Run": "Cardio", "Mary": "Core", "warmup": "Warmup", "Routine": "Full Body" };
     for (const ex of exicon) {
       const name = ex.name.toLowerCase().trim();
       // 1. Use tags if available
@@ -1052,7 +1052,17 @@ export default function F3QPlanner() {
       for (const [g, pattern] of Object.entries(descPatterns)) {
         if (pattern.test(lower)) return g;
       }
-      // 4. Common F3 patterns
+      // 4. Coupon exercises — classify by the movement, not the equipment
+      if (/coupon|block/i.test(lower)) {
+        if (/press|merkin|push/i.test(lower)) return "Chest";
+        if (/curl/i.test(lower)) return "Arms";
+        if (/row/i.test(lower)) return "Back";
+        if (/squat|lunge|swing/i.test(lower)) return "Legs";
+        if (/overhead|shoulder|raise/i.test(lower)) return "Shoulders";
+        if (/carry|farmer|ruck|drag/i.test(lower)) return "Legs";
+        return "Full Body"; // generic coupon work = full body
+      }
+      // 5. Common F3 patterns
       if (/hold|static|iso/i.test(lower)) return "Legs";
       if (/stretch|warm|circle|michael phelps|weed pick|cherry pick|windmill|hillbill|imperial/i.test(lower)) return "Warmup";
       if (/partner|setup|mosey|grab|return|recover|switch/i.test(lower)) return "Cardio";
@@ -1060,7 +1070,7 @@ export default function F3QPlanner() {
       return "Other";
     };
     const groupCounts = {};
-    const groupOrder = ["Chest","Shoulders","Arms","Back","Core","Plank","Legs","Cardio","Full Body","Coupon Work","Warmup","Other"];
+    const groupOrder = ["Chest","Shoulders","Arms","Back","Core","Plank","Legs","Cardio","Full Body","Warmup","Other"];
     for (const g of groupOrder) groupCounts[g] = 0;
     for (const ex of allExercises) {
       const group = classifyExercise(ex.name);
@@ -1887,7 +1897,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                                   'Core':'var(--gold)','Plank':'#D4AC0D',
                                   'Legs':'var(--red)',
                                   'Cardio':'var(--success)','Full Body':'#9B59B6',
-                                  'Coupon Work':'#E67E22','Warmup':'#95A5A6'
+                                  'Warmup':'#95A5A6'
                                 })[group] || 'var(--muted)',borderRadius:2,transition:'width 0.3s'}} />
                               </div>
                               <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,color:'var(--muted)',textAlign:'right'}}>{count}</div>
