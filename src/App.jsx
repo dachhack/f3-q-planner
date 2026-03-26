@@ -1106,7 +1106,9 @@ export default function F3QPlanner() {
       "Pain", "Lasting Soreness", "Unsolicited Workout Advice", "Farting",
       "Curling Into Fetal Position", "Mumble Chatter", "Regret",
       "Questioning Life Choices", "Trying Not to Cry", "Mystery Meat",
-      "Whatever This Is", "Suffering (General)", "Unidentified Gains"
+      "Whatever This Is", "Suffering (General)", "Unidentified Gains",
+      "Tantric Lovemaking", "Getting Lost in Your Eyes",
+      "Twice the Recommended Prostate Exams"
     ];
     const otherLabel = snarkyOther[Math.floor(Math.random() * snarkyOther.length)];
     const groupCounts = {};
