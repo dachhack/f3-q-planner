@@ -748,6 +748,7 @@ export default function F3QPlanner() {
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [weather, setWeather] = useState(null);
   const [activeTab, setActiveTab] = useState("weinke");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(null);
@@ -1430,6 +1431,28 @@ ${exerciseNames}
 Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `Focus on these genres: ${form.playlistGenres.join(", ")}.` : "Mix classic rock, 90s hip-hop, and hard-hitting anthems."} ${form.playlistDeepCuts ? "IMPORTANT: DEEP CUTS ONLY. Do NOT use obvious greatest hits or overplayed songs. Pick B-sides, album tracks, lesser-known tracks by well-known artists, or tracks by lesser-known artists in the genre. Surprise the PAX with songs they haven't heard at every workout. No 'Eye of the Tiger', no 'Thunderstruck', no 'Lose Yourself' — go deeper." : "Vary the track selection — avoid defaulting to the same cliche workout songs every time (no Eye of the Tiger, no Thunderstruck unless the theme calls for it). Pick fresh tracks PAX will recognize but haven't heard at every beatdown."} Sequence to match the energy arc — warmup through finisher.`;
   };
 
+  // Fetch weather for AO location + date
+  const fetchWeather = async () => {
+    const aoObj = aos.find(a => (a.locationName || a.name) === form.ao);
+    const lat = aoObj?.lat;
+    const lng = aoObj?.lon || aoObj?.lng;
+    if (!lat || !lng || !form.date) return null;
+    try {
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&start_date=${form.date}&end_date=${form.date}`);
+      const data = await res.json();
+      if (!data.daily) return null;
+      const codes = {0:"Clear",1:"Mostly Clear",2:"Partly Cloudy",3:"Overcast",45:"Foggy",48:"Foggy",51:"Light Drizzle",53:"Drizzle",55:"Heavy Drizzle",61:"Light Rain",63:"Rain",65:"Heavy Rain",71:"Light Snow",73:"Snow",75:"Heavy Snow",80:"Rain Showers",81:"Rain Showers",82:"Heavy Showers",95:"Thunderstorm",96:"Thunderstorm + Hail",99:"Thunderstorm + Hail"};
+      return {
+        high: Math.round(data.daily.temperature_2m_max[0]),
+        low: Math.round(data.daily.temperature_2m_min[0]),
+        precip: data.daily.precipitation_probability_max[0],
+        condition: codes[data.daily.weathercode[0]] || "Unknown",
+        sunrise: data.daily.sunrise?.[0]?.split("T")[1] || "",
+        sunset: data.daily.sunset?.[0]?.split("T")[1] || "",
+      };
+    } catch { return null; }
+  };
+
   const generate = async () => {
     setFormCollapsed(true);
     setLoading(true);
@@ -1438,11 +1461,15 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
     if (form.q) addToRoster(form.q);
     setResult(null);
     setIsSaved(false);
+    // Fetch weather
+    const wx = await fetchWeather();
+    setWeather(wx);
     try {
+      const prompt = buildPrompt() + (wx ? `\n\nWeather forecast for ${form.date}: ${wx.condition}, High ${wx.high}°F / Low ${wx.low}°F, ${wx.precip}% chance of rain. Sunrise ${wx.sunrise}. Consider weather when planning — if hot (>85°F) mention hydration, if cold (<40°F) extend warmup, if rainy adjust for wet conditions.` : "");
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: buildPrompt() })
+        body: JSON.stringify({ prompt })
       });
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -1987,6 +2014,31 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
                     ))}
                   </div>
                 </div>
+
+                {/* Weather */}
+                {weather && (
+                  <div style={{display:'flex',gap:16,padding:'10px 16px',background:'var(--dark)',border:'1px solid var(--border)',marginTop:8,borderRadius:4,alignItems:'center',flexWrap:'wrap'}}>
+                    <div style={{fontSize:20}}>{weather.condition.includes("Rain") || weather.condition.includes("Drizzle") || weather.condition.includes("Shower") ? "🌧" : weather.condition.includes("Snow") ? "❄️" : weather.condition.includes("Thunder") ? "⛈" : weather.condition.includes("Cloud") || weather.condition.includes("Overcast") ? "☁️" : weather.condition.includes("Fog") ? "🌫" : "☀️"}</div>
+                    <div>
+                      <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Forecast</div>
+                      <div style={{fontSize:14,color:'var(--text)',fontWeight:600}}>{weather.condition}</div>
+                    </div>
+                    <div>
+                      <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Temp</div>
+                      <div style={{fontSize:14,color:'var(--text)',fontWeight:600}}>{weather.low}° / {weather.high}°F</div>
+                    </div>
+                    {weather.precip > 0 && (
+                      <div>
+                        <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Rain</div>
+                        <div style={{fontSize:14,color: weather.precip > 50 ? 'var(--red)' : 'var(--text)',fontWeight:600}}>{weather.precip}%</div>
+                      </div>
+                    )}
+                    <div>
+                      <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Sunrise</div>
+                      <div style={{fontSize:14,color:'var(--gold)',fontWeight:600}}>{weather.sunrise}</div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Actions + Map */}
                 <div className="actions-map-row" style={{display:'flex',alignItems:'stretch',gap:16,marginTop:16}}>
