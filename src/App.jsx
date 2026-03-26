@@ -2452,7 +2452,23 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
                 <div style={{color:'var(--text)'}}>Claude (Anthropic) + F3 Nation API</div>
               </div>
             </div>
-            <div style={{marginTop:20,paddingTop:16,borderTop:'1px solid var(--border)',fontSize:12,color:'var(--muted)',fontStyle:'italic',textAlign:'center'}}>
+            <div style={{marginTop:20,paddingTop:16,borderTop:'1px solid var(--border)'}}>
+              <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--gold)',textTransform:'uppercase',marginBottom:8}}>Recent Changes</div>
+              <div style={{fontSize:12,color:'var(--muted)',lineHeight:1.8}}>
+                {[
+                  "Backblast tab with PAX roster + exercise checklist",
+                  "Save/load beatdowns + shareable links",
+                  "Playlist genre selector + deep cuts mode",
+                  "Workout evaluation with muscle group breakdown",
+                  "AO map + address from F3 Nation API",
+                  "Spotify search links on playlist tracks",
+                  "Exercise variety + difficulty selectors (1-5)",
+                  "Repeating exercises collapsed with REPEAT badge",
+                  "Exicon links on exercise names",
+                ].map((item, i) => <div key={i}>- {item}</div>)}
+              </div>
+            </div>
+            <div style={{marginTop:16,paddingTop:12,borderTop:'1px solid var(--border)',fontSize:12,color:'var(--muted)',fontStyle:'italic',textAlign:'center'}}>
               Thanks to Buckshot, Tastycake, and the men of F3 Badapple for helping get this silly thing working.
               <div style={{marginTop:8}}>Aye! 🪖</div>
             </div>
