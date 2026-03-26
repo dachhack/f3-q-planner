@@ -934,18 +934,25 @@ export default function F3QPlanner() {
 
   // Output map: show AO location in the generated weinke
   useEffect(() => {
-    if (!result || !outputMapRef.current || !window.L) return;
+    if (!result || !window.L) return;
     const aoObj = aos.find(a => (a.locationName || a.name) === form.ao);
     const lat = aoObj?.lat;
     const lng = aoObj?.lon || aoObj?.lng;
     const initMap = (mlat, mlng) => {
-      if (!outputMapInstanceRef.current) {
-        outputMapInstanceRef.current = window.L.map(outputMapRef.current, { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false }).setView([mlat, mlng], 15);
-        window.L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(outputMapInstanceRef.current);
+      const el = outputMapRef.current;
+      if (!el) return;
+      // Destroy old instance if exists (handles re-generation)
+      if (outputMapInstanceRef.current) {
+        outputMapInstanceRef.current.remove();
+        outputMapInstanceRef.current = null;
       }
-      outputMapInstanceRef.current.invalidateSize();
-      placeMarker(outputMapInstanceRef.current, mlat, mlng, form.ao, outputMarkerRef, 13);
+      outputMapInstanceRef.current = window.L.map(el, { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false }).setView([mlat, mlng], 13);
+      window.L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(outputMapInstanceRef.current);
+      window.L.marker([mlat, mlng]).addTo(outputMapInstanceRef.current);
+      // Force size recalculation after render
+      setTimeout(() => outputMapInstanceRef.current?.invalidateSize(), 100);
     };
+    // Wait for the DOM to render the map container
     const timer = setTimeout(() => {
       if (lat && lng) {
         initMap(lat, lng);
@@ -955,7 +962,7 @@ export default function F3QPlanner() {
           .then(data => { if (data.length > 0) initMap(parseFloat(data[0].lat), parseFloat(data[0].lon)); })
           .catch(() => {});
       }
-    }, 300);
+    }, 500);
     return () => clearTimeout(timer);
   }, [result, aos, form.ao, form.location]);
 
