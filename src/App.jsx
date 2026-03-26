@@ -768,6 +768,54 @@ export default function F3QPlanner() {
   const [bbFngCount, setBbFngCount] = useState(0);
   const [bbFngNames, setBbFngNames] = useState("");
   const [bbDownrange, setBbDownrange] = useState("");
+  // PAX Roster
+  const [paxRoster, setPaxRoster] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("f3_pax_roster") || "[]"); } catch { return []; }
+  });
+  const [bbSelectedPax, setBbSelectedPax] = useState(new Set());
+  const [showRosterMgmt, setShowRosterMgmt] = useState(false);
+  const [newPaxName, setNewPaxName] = useState("");
+  const [rosterCopied, setRosterCopied] = useState(false);
+
+  const savePaxRoster = (roster) => {
+    const sorted = [...new Set(roster.map(n => n.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    setPaxRoster(sorted);
+    localStorage.setItem("f3_pax_roster", JSON.stringify(sorted));
+  };
+
+  // Auto-add names to roster from Q field and backblast PAX entries
+  const addToRoster = (names) => {
+    const newNames = names.split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+    if (newNames.length === 0) return;
+    const merged = [...new Set([...paxRoster, ...newNames])];
+    if (merged.length > paxRoster.length) savePaxRoster(merged);
+  };
+
+  // Sync selected PAX to bbPax text
+  useEffect(() => {
+    if (bbSelectedPax.size > 0) {
+      setBbPax([...bbSelectedPax].sort((a, b) => a.localeCompare(b)).join(", "));
+    }
+  }, [bbSelectedPax]);
+
+  const togglePaxSelection = (name) => {
+    setBbSelectedPax(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  };
+
+  const shareRoster = () => {
+    navigator.clipboard.writeText(paxRoster.join(", "));
+    setRosterCopied(true);
+    setTimeout(() => setRosterCopied(false), 2000);
+  };
+
+  const importRoster = () => {
+    const input = prompt("Paste a comma-separated list of F3 names:");
+    if (input) addToRoster(input);
+  };
 
   const saveBeatdown = () => {
     if (!result) return;
@@ -885,6 +933,9 @@ export default function F3QPlanner() {
   };
 
   const copyBackblast = () => {
+    // Auto-add all PAX + FNG names to roster for future use
+    if (bbPax) addToRoster(bbPax);
+    if (bbFngNames) addToRoster(bbFngNames);
     navigator.clipboard.writeText(generateBackblast());
     setBbCopied(true);
     setTimeout(() => setBbCopied(false), 2000);
@@ -1364,6 +1415,8 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
     setFormCollapsed(true);
     setLoading(true);
     setError(null);
+    // Auto-add Q name to roster
+    if (form.q) addToRoster(form.q);
     setResult(null);
     try {
       const res = await fetch("/api/generate", {
@@ -2174,12 +2227,82 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                   <div style={{marginTop:24,display:'flex',flexDirection:'column',gap:20}}>
                     <div className="section-label">Post-Workout Backblast</div>
 
-                    {/* PAX Attendance */}
+                    {/* PAX Attendance — roster chips + manual entry */}
                     <div>
-                      <label style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:2,color:'var(--gold)',textTransform:'uppercase',display:'block',marginBottom:6}}>PAX (comma-separated)</label>
-                      <textarea style={{width:'100%',minHeight:60,background:'var(--dark)',border:'1px solid var(--border)',borderRadius:4,padding:12,color:'var(--text)',fontSize:14,fontFamily:"'Barlow',sans-serif",resize:'vertical'}}
-                        placeholder="e.g. Button, Woody, Sweep3r, Zima..."
-                        value={bbPax} onChange={e => setBbPax(e.target.value)} />
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                        <label style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:2,color:'var(--gold)',textTransform:'uppercase'}}>
+                          PAX {bbSelectedPax.size > 0 && `(${bbSelectedPax.size})`}
+                        </label>
+                        <button onClick={() => setShowRosterMgmt(s => !s)}
+                          style={{background:'none',border:'none',color:'var(--steel)',cursor:'pointer',fontSize:11,fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:1}}>
+                          {showRosterMgmt ? "DONE" : `MANAGE ROSTER (${paxRoster.length})`}
+                        </button>
+                      </div>
+                      {/* Roster chips */}
+                      {paxRoster.length > 0 && (
+                        <div style={{display:'flex',flexWrap:'wrap',gap:6,marginBottom:8}}>
+                          {paxRoster.map(name => {
+                            const selected = bbSelectedPax.has(name);
+                            return (
+                              <div key={name} onClick={() => togglePaxSelection(name)}
+                                style={{padding:'5px 10px',borderRadius:4,cursor:'pointer',fontSize:13,fontFamily:"'Barlow',sans-serif",
+                                  background: selected ? 'var(--gold)' : 'var(--dark)',
+                                  color: selected ? 'var(--black)' : 'var(--muted)',
+                                  border: `1px solid ${selected ? 'var(--gold)' : 'var(--border)'}`,
+                                  fontWeight: selected ? 600 : 400,
+                                  transition:'all 0.1s'}}>
+                                {name}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {/* Manual entry for names not in roster */}
+                      <div style={{display:'flex',gap:8}}>
+                        <input placeholder="Add PAX not in roster..." value={newPaxName}
+                          onChange={e => setNewPaxName(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === "Enter" && newPaxName.trim()) {
+                              const names = newPaxName.split(/[,]/).map(s => s.trim()).filter(Boolean);
+                              names.forEach(n => { addToRoster(n); setBbSelectedPax(prev => new Set([...prev, n])); });
+                              setNewPaxName("");
+                            }
+                          }}
+                          style={{flex:1,background:'var(--dark)',border:'1px solid var(--border)',borderRadius:4,padding:'8px 12px',color:'var(--text)',fontSize:13,fontFamily:"'Barlow',sans-serif"}} />
+                        <button onClick={() => {
+                          if (newPaxName.trim()) {
+                            const names = newPaxName.split(/[,]/).map(s => s.trim()).filter(Boolean);
+                            names.forEach(n => { addToRoster(n); setBbSelectedPax(prev => new Set([...prev, n])); });
+                            setNewPaxName("");
+                          }
+                        }} style={{background:'var(--gold)',color:'var(--black)',border:'none',borderRadius:4,padding:'8px 14px',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:1}}>ADD</button>
+                      </div>
+                      {/* Roster Management */}
+                      {showRosterMgmt && (
+                        <div style={{marginTop:12,padding:12,background:'var(--dark)',border:'1px solid var(--border)',borderRadius:4}}>
+                          <div style={{display:'flex',gap:8,marginBottom:8}}>
+                            <button onClick={shareRoster} style={{flex:1,padding:'6px',background:'none',border:'1px solid var(--steel)',color:'var(--steel)',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:1,borderRadius:4}}>
+                              {rosterCopied ? "COPIED" : "COPY ROSTER"}
+                            </button>
+                            <button onClick={importRoster} style={{flex:1,padding:'6px',background:'none',border:'1px solid var(--gold)',color:'var(--gold)',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:1,borderRadius:4}}>
+                              IMPORT ROSTER
+                            </button>
+                            <button onClick={() => { if (confirm("Clear entire PAX roster?")) savePaxRoster([]); }}
+                              style={{flex:1,padding:'6px',background:'none',border:'1px solid var(--red)',color:'var(--red)',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:1,borderRadius:4}}>
+                              CLEAR ALL
+                            </button>
+                          </div>
+                          <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
+                            {paxRoster.map(name => (
+                              <div key={name} style={{display:'flex',alignItems:'center',gap:4,padding:'3px 8px',background:'var(--panel)',border:'1px solid var(--border)',borderRadius:4,fontSize:12,color:'var(--text)'}}>
+                                {name}
+                                <button onClick={() => savePaxRoster(paxRoster.filter(n => n !== name))}
+                                  style={{background:'none',border:'none',color:'var(--red)',cursor:'pointer',fontSize:14,padding:0,lineHeight:1}}>×</button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* FNG + Pre-Ruck/Run + Downrange */}
