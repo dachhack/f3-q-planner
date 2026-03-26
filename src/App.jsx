@@ -1102,12 +1102,19 @@ export default function F3QPlanner() {
       if (/dora|round|set|circuit/i.test(lower)) return "Full Body";
       return "Other";
     };
+    const snarkyOther = [
+      "Pain", "Lasting Soreness", "Unsolicited Workout Advice", "Farting",
+      "Curling Into Fetal Position", "Mumble Chatter", "Regret",
+      "Questioning Life Choices", "Trying Not to Cry", "Mystery Meat",
+      "Whatever This Is", "Suffering (General)", "Unidentified Gains"
+    ];
+    const otherLabel = snarkyOther[Math.floor(Math.random() * snarkyOther.length)];
     const groupCounts = {};
-    const groupOrder = ["Chest","Shoulders","Arms","Back","Core","Plank","Legs","Cardio","Full Body","Warmup","Other"];
+    const groupOrder = ["Chest","Shoulders","Arms","Back","Core","Plank","Legs","Cardio","Full Body","Warmup", otherLabel];
     for (const g of groupOrder) groupCounts[g] = 0;
     for (const ex of allExercises) {
       const group = classifyExercise(ex.name);
-      groupCounts[group] = (groupCounts[group] || 0) + 1;
+      groupCounts[group === "Other" ? otherLabel : group] = (groupCounts[group === "Other" ? otherLabel : group] || 0) + 1;
     }
 
     // Duration parsing — try block durations, fall back to pace guide times or configured duration
