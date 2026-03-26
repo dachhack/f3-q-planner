@@ -1,7 +1,12 @@
 {
   "name": "f3-q-planner",
   "version": "1.0.0",
-  "private": true,
+  "description": "AI-powered beatdown planner for F3 Q leaders — generates Weinkes, playlists, and pre-blasts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dachhack/f3-q-planner"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

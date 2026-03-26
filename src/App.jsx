@@ -578,6 +578,31 @@ const STYLES = `
   .copy-btn:hover { border-color: var(--gold); color: var(--gold); }
   .copy-btn.copied { border-color: var(--success); color: var(--success); }
 
+  /* ── INFO BUTTON + MODAL ── */
+  .info-btn {
+    position: fixed; bottom: 20px; right: 20px; z-index: 1000;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--gold); color: var(--black); border: none;
+    font-family: 'Bebas Neue', sans-serif; font-size: 20px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4); transition: transform 0.15s;
+  }
+  .info-btn:hover { transform: scale(1.1); }
+  .info-overlay {
+    position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .info-modal {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    max-width: 420px; width: 100%; padding: 32px; position: relative;
+  }
+  .info-close {
+    position: absolute; top: 12px; right: 16px; background: none; border: none;
+    color: var(--muted); font-size: 20px; cursor: pointer;
+  }
+  .info-close:hover { color: var(--text); }
+
   /* ── PAX AUTOCOMPLETE ── */
   .q-autocomplete { position: relative; }
   .q-suggestions {
@@ -728,6 +753,7 @@ export default function F3QPlanner() {
   const outputMapInstanceRef = useRef(null);
   const outputMarkerRef = useRef(null);
   const outputRef = useRef(null);
+  const [showInfo, setShowInfo] = useState(false);
 
   const LOADING_PHRASES = [
     "Woody is not impressed",
@@ -1978,6 +2004,41 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
           </div>
         </div>
       </div>
+
+      {/* Info Button */}
+      <button className="info-btn" onClick={() => setShowInfo(true)} title="About this app">i</button>
+
+      {/* Info Modal */}
+      {showInfo && (
+        <div className="info-overlay" onClick={() => setShowInfo(false)}>
+          <div className="info-modal" onClick={e => e.stopPropagation()}>
+            <button className="info-close" onClick={() => setShowInfo(false)}>x</button>
+            <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:'var(--gold)',letterSpacing:2,marginBottom:4}}>F3 Q Planner</div>
+            <div style={{fontSize:13,color:'var(--muted)',marginBottom:20}}>AI-powered beatdown planner for F3 Q leaders</div>
+            <div style={{display:'flex',flexDirection:'column',gap:12,fontSize:14}}>
+              <div>
+                <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Built by</div>
+                <div style={{color:'var(--text)',fontWeight:600}}>Button <span style={{color:'var(--muted)',fontWeight:400}}>— F3 Alpha</span></div>
+              </div>
+              <div>
+                <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Open Source</div>
+                <a href="https://github.com/dachhack/f3-q-planner" target="_blank" rel="noopener noreferrer" style={{color:'var(--steel)',textDecoration:'none',borderBottom:'1px dotted var(--steel)'}}>github.com/dachhack/f3-q-planner</a>
+              </div>
+              <div>
+                <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>License</div>
+                <div style={{color:'var(--text)'}}>MIT — free to use, modify, and share</div>
+              </div>
+              <div>
+                <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Powered by</div>
+                <div style={{color:'var(--text)'}}>Claude (Anthropic) + F3 Nation API</div>
+              </div>
+            </div>
+            <div style={{marginTop:20,paddingTop:16,borderTop:'1px solid var(--border)',fontSize:12,color:'var(--muted)',fontStyle:'italic',textAlign:'center'}}>
+              Aye! 🪖
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
