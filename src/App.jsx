@@ -926,11 +926,10 @@ export default function F3QPlanner() {
     }
   }, [form.location]);
 
-  const placeMarker = (map, lat, lng, label, mRef) => {
+  const placeMarker = (map, lat, lng, label, mRef, zoom = 15) => {
     if (mRef.current) mRef.current.remove();
-    map.setView([lat, lng], 15);
+    map.setView([lat, lng], zoom);
     mRef.current = window.L.marker([lat, lng]).addTo(map);
-    if (label) mRef.current.bindPopup(`<b>${label}</b>`).openPopup();
   };
 
   // Output map: show AO location in the generated weinke
@@ -945,7 +944,7 @@ export default function F3QPlanner() {
         window.L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(outputMapInstanceRef.current);
       }
       outputMapInstanceRef.current.invalidateSize();
-      placeMarker(outputMapInstanceRef.current, mlat, mlng, form.ao, outputMarkerRef);
+      placeMarker(outputMapInstanceRef.current, mlat, mlng, form.ao, outputMarkerRef, 13);
     };
     const timer = setTimeout(() => {
       if (lat && lng) {
