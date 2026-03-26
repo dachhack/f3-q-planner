@@ -635,16 +635,18 @@ const STYLES = `
   }
 
   /* ── TABS ── */
-  .tabs { display: flex; gap: 2px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+  .tabs { display: flex; gap: 2px; margin-bottom: 24px; border-bottom: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .tab {
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 13px;
     letter-spacing: 2px;
     text-transform: uppercase;
-    padding: 10px 20px;
+    padding: 10px 14px;
     cursor: pointer;
     color: var(--muted);
     border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    flex-shrink: 0;
     margin-bottom: -1px;
     transition: all 0.15s;
     background: none;
