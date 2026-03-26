@@ -1297,7 +1297,9 @@ export default function F3QPlanner() {
       "Questioning Life Choices", "Trying Not to Cry", "Mystery Meat",
       "Whatever This Is", "Suffering (General)", "Unidentified Gains",
       "Tantric Lovemaking", "Getting Lost in Your Eyes",
-      "Twice the Recommended Prostate Exams", "That's What She Saids"
+      "Twice the Recommended Prostate Exams", "That's What She Saids",
+      "Cuddling", "Drama", "Sucking Air", "Demonstrating Proper Form",
+      "Interpretive Dance", "Smoke Break", "Tickets to the Gun Show"
     ];
     const otherLabel = snarkyOther[Math.floor(Math.random() * snarkyOther.length)];
     const groupCounts = {};
