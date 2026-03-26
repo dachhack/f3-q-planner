@@ -946,7 +946,7 @@ export default function F3QPlanner() {
         outputMapInstanceRef.current.remove();
         outputMapInstanceRef.current = null;
       }
-      outputMapInstanceRef.current = window.L.map(el, { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false }).setView([mlat, mlng], 13);
+      outputMapInstanceRef.current = window.L.map(el, { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false }).setView([mlat, mlng], 14);
       window.L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { maxZoom: 19 }).addTo(outputMapInstanceRef.current);
       window.L.marker([mlat, mlng]).addTo(outputMapInstanceRef.current);
       // Force size recalculation after render
