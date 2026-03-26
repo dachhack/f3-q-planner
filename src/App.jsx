@@ -765,6 +765,9 @@ export default function F3QPlanner() {
   const [bbExDone, setBbExDone] = useState({});
   const [bbNotes, setBbNotes] = useState("");
   const [bbCopied, setBbCopied] = useState(false);
+  const [bbFngCount, setBbFngCount] = useState(0);
+  const [bbFngNames, setBbFngNames] = useState("");
+  const [bbDownrange, setBbDownrange] = useState("");
 
   const saveBeatdown = () => {
     if (!result) return;
@@ -795,31 +798,47 @@ export default function F3QPlanner() {
     if (!result) return "";
     const allEx = result.blocks?.flatMap(b => (b.exercises || []).map(e => ({ ...e, block: b.name }))) || [];
     const doneExercises = allEx.filter((_, i) => bbExDone[i] !== false);
-    const skippedExercises = allEx.filter((_, i) => bbExDone[i] === false);
     const paxList = bbPax.split(/[,\n]/).map(s => s.trim()).filter(Boolean);
     const preRuckList = bbPreRuck.split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+    const fngNames = bbFngNames.split(/[,\n]/).map(s => s.trim()).filter(Boolean);
 
-    let bb = `**Backblast — ${result.theme}**\n`;
-    bb += `**AO:** ${form.ao || "N/A"}\n`;
-    bb += `**Q:** ${form.q || "N/A"}\n`;
-    bb += `**Date:** ${form.date || "N/A"}\n`;
-    bb += `**PAX (${paxList.length}):** ${paxList.join(", ") || "N/A"}\n`;
-    if (preRuckList.length > 0) bb += `**Pre-Ruck/Run:** ${preRuckList.join(", ")}\n`;
-    bb += `\n**What We Did:**\n`;
+    let bb = `${result.theme} – ${form.date || "N/A"}\n`;
+    bb += `AO: ${form.ao || "N/A"}\n`;
+    bb += `QiC: ${form.q || "N/A"}\n`;
+    bb += `Pax Count: ${paxList.length}\n`;
+    bb += `Pax List: ${paxList.join(", ") || "N/A"}\n`;
+    bb += `FNG Count: ${bbFngCount}\n`;
+    if (fngNames.length > 0) bb += `FNG Names: ${fngNames.join(", ")}\n`;
+    bb += `Downrange: ${bbDownrange || ""}\n`;
+    if (preRuckList.length > 0) bb += `Pre-Ruck/Run: ${preRuckList.join(", ")}\n`;
+
+    // Warmup block
+    const warmupBlock = result.blocks?.find(b => (b.name || "").toLowerCase().includes("warm"));
+    if (warmupBlock) {
+      bb += `\n`;
+      const warmupExercises = (warmupBlock.exercises || []).filter((_, i) => {
+        const globalIdx = allEx.findIndex(e => e === warmupBlock.exercises[i] || (e.name === warmupBlock.exercises[i]?.name && e.block === warmupBlock.name));
+        return bbExDone[globalIdx] !== false;
+      });
+      for (const ex of warmupBlock.exercises || []) {
+        bb += `${ex.name} ${ex.reps}\n`;
+      }
+    }
+
+    // The Thang
+    bb += `\nThe Thang:\n`;
     let currentBlock = "";
     for (const ex of doneExercises) {
-      if (ex.block !== currentBlock) {
+      if (ex.block !== currentBlock && !(ex.block || "").toLowerCase().includes("warm") && !(ex.block || "").toLowerCase().includes("cot")) {
         currentBlock = ex.block;
-        bb += `\n*${currentBlock}*\n`;
+        bb += `\n${currentBlock}\n`;
       }
-      bb += `- ${ex.name} (${ex.reps})\n`;
+      if (!(ex.block || "").toLowerCase().includes("warm") && !(ex.block || "").toLowerCase().includes("cot")) {
+        bb += `${ex.name} ${ex.reps}\n`;
+      }
     }
-    if (skippedExercises.length > 0) {
-      bb += `\n**Skipped/Modified:**\n`;
-      for (const ex of skippedExercises) bb += `- ${ex.name}\n`;
-    }
-    if (bbNotes) bb += `\n**COT/Notes:**\n${bbNotes}\n`;
-    bb += `\n🪖 Generated with F3 Q Planner`;
+
+    if (bbNotes) bb += `\n${bbNotes}\n`;
     return bb;
   };
 
@@ -2116,12 +2135,28 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                         value={bbPax} onChange={e => setBbPax(e.target.value)} />
                     </div>
 
-                    {/* Pre-Ruck/Run */}
+                    {/* FNG + Pre-Ruck/Run + Downrange */}
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+                      <div>
+                        <label style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:2,color:'var(--gold)',textTransform:'uppercase',display:'block',marginBottom:6}}>FNG Count</label>
+                        <input type="number" min="0" value={bbFngCount} onChange={e => setBbFngCount(parseInt(e.target.value) || 0)}
+                          style={{width:'100%',background:'var(--dark)',border:'1px solid var(--border)',borderRadius:4,padding:12,color:'var(--text)',fontSize:14,fontFamily:"'Barlow',sans-serif"}} />
+                      </div>
+                      <div>
+                        <label style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:2,color:'var(--gold)',textTransform:'uppercase',display:'block',marginBottom:6}}>FNG Names</label>
+                        <input value={bbFngNames} onChange={e => setBbFngNames(e.target.value)} placeholder="e.g. Sparkle, New Guy"
+                          style={{width:'100%',background:'var(--dark)',border:'1px solid var(--border)',borderRadius:4,padding:12,color:'var(--text)',fontSize:14,fontFamily:"'Barlow',sans-serif"}} />
+                      </div>
+                    </div>
                     <div>
                       <label style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:2,color:'var(--gold)',textTransform:'uppercase',display:'block',marginBottom:6}}>Pre-Ruck / Pre-Run Participants</label>
-                      <textarea style={{width:'100%',minHeight:40,background:'var(--dark)',border:'1px solid var(--border)',borderRadius:4,padding:12,color:'var(--text)',fontSize:14,fontFamily:"'Barlow',sans-serif",resize:'vertical'}}
-                        placeholder="e.g. Button, Woody (optional)"
-                        value={bbPreRuck} onChange={e => setBbPreRuck(e.target.value)} />
+                      <input value={bbPreRuck} onChange={e => setBbPreRuck(e.target.value)} placeholder="e.g. Button, Woody (optional)"
+                        style={{width:'100%',background:'var(--dark)',border:'1px solid var(--border)',borderRadius:4,padding:12,color:'var(--text)',fontSize:14,fontFamily:"'Barlow',sans-serif"}} />
+                    </div>
+                    <div>
+                      <label style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:2,color:'var(--gold)',textTransform:'uppercase',display:'block',marginBottom:6}}>Downrange</label>
+                      <input value={bbDownrange} onChange={e => setBbDownrange(e.target.value)} placeholder="e.g. Prayers for Woody's M"
+                        style={{width:'100%',background:'var(--dark)',border:'1px solid var(--border)',borderRadius:4,padding:12,color:'var(--text)',fontSize:14,fontFamily:"'Barlow',sans-serif"}} />
                     </div>
 
                     {/* Exercise Checklist */}
