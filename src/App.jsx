@@ -115,7 +115,7 @@ const STYLES = `
   }
   .form-toggle-arrow.collapsed { transform: rotate(-90deg); }
   .form-body {
-    max-height: 2000px;
+    max-height: 5000px;
     overflow: visible;
     transition: max-height 0.4s ease, padding 0.4s ease;
     padding: 24px 28px;
