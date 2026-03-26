@@ -57,7 +57,7 @@ Return ONLY valid JSON in this exact structure:
       { "title": "Song title", "artist": "Artist name", "duration": "3:45" }
     ]}
   ],
-  "preBlast": "Full social media pre-blast post. Tease theme and vibe only — NO exercise names, rep counts, or block details. End with logistics."
+  "preBlast": "Full social media pre-blast post. Tease theme and vibe only — NO exercise names, rep counts, or block details. If coupons/blocks are needed, clearly state to bring them and specify what kind (cinder blocks, kettlebells, sandbags, etc.). End with logistics (AO, time, date, Q name)."
 }`;
 
 // F3 Nation API config (oRPC protocol)
