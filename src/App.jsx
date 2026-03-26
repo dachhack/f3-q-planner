@@ -754,6 +754,80 @@ export default function F3QPlanner() {
   const outputMarkerRef = useRef(null);
   const outputRef = useRef(null);
   const [showInfo, setShowInfo] = useState(false);
+  // Save/Load
+  const [savedBeatdowns, setSavedBeatdowns] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("f3_saved_beatdowns") || "[]"); } catch { return []; }
+  });
+  const [showSaved, setShowSaved] = useState(false);
+  // Backblast
+  const [bbPax, setBbPax] = useState("");
+  const [bbPreRuck, setBbPreRuck] = useState("");
+  const [bbExDone, setBbExDone] = useState({});
+  const [bbNotes, setBbNotes] = useState("");
+  const [bbCopied, setBbCopied] = useState(false);
+
+  const saveBeatdown = () => {
+    if (!result) return;
+    const entry = { id: Date.now(), form: {...form}, result, savedAt: new Date().toISOString() };
+    const updated = [entry, ...savedBeatdowns].slice(0, 50);
+    setSavedBeatdowns(updated);
+    localStorage.setItem("f3_saved_beatdowns", JSON.stringify(updated));
+  };
+
+  const loadBeatdown = (entry) => {
+    setForm(entry.form);
+    setResult(entry.result);
+    setBbExDone({});
+    setBbPax("");
+    setBbPreRuck("");
+    setBbNotes("");
+    setShowSaved(false);
+    setActiveTab("weinke");
+  };
+
+  const deleteBeatdown = (id) => {
+    const updated = savedBeatdowns.filter(b => b.id !== id);
+    setSavedBeatdowns(updated);
+    localStorage.setItem("f3_saved_beatdowns", JSON.stringify(updated));
+  };
+
+  const generateBackblast = () => {
+    if (!result) return "";
+    const allEx = result.blocks?.flatMap(b => (b.exercises || []).map(e => ({ ...e, block: b.name }))) || [];
+    const doneExercises = allEx.filter((_, i) => bbExDone[i] !== false);
+    const skippedExercises = allEx.filter((_, i) => bbExDone[i] === false);
+    const paxList = bbPax.split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+    const preRuckList = bbPreRuck.split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+
+    let bb = `**Backblast — ${result.theme}**\n`;
+    bb += `**AO:** ${form.ao || "N/A"}\n`;
+    bb += `**Q:** ${form.q || "N/A"}\n`;
+    bb += `**Date:** ${form.date || "N/A"}\n`;
+    bb += `**PAX (${paxList.length}):** ${paxList.join(", ") || "N/A"}\n`;
+    if (preRuckList.length > 0) bb += `**Pre-Ruck/Run:** ${preRuckList.join(", ")}\n`;
+    bb += `\n**What We Did:**\n`;
+    let currentBlock = "";
+    for (const ex of doneExercises) {
+      if (ex.block !== currentBlock) {
+        currentBlock = ex.block;
+        bb += `\n*${currentBlock}*\n`;
+      }
+      bb += `- ${ex.name} (${ex.reps})\n`;
+    }
+    if (skippedExercises.length > 0) {
+      bb += `\n**Skipped/Modified:**\n`;
+      for (const ex of skippedExercises) bb += `- ${ex.name}\n`;
+    }
+    if (bbNotes) bb += `\n**COT/Notes:**\n${bbNotes}\n`;
+    bb += `\n🪖 Generated with F3 Q Planner`;
+    return bb;
+  };
+
+  const copyBackblast = () => {
+    navigator.clipboard.writeText(generateBackblast());
+    setBbCopied(true);
+    setTimeout(() => setBbCopied(false), 2000);
+  };
 
   const LOADING_PHRASES = [
     "Woody is not impressed",
@@ -1670,7 +1744,26 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                   <button className="btn-generate" onClick={generate} disabled={loading}>
                     {loading ? "GENERATING..." : "GENERATE BEATDOWN"}
                   </button>
+                  {savedBeatdowns.length > 0 && (
+                    <button onClick={() => setShowSaved(s => !s)}
+                      style={{width:'100%',marginTop:8,padding:'10px',background:'none',border:'1px solid var(--border)',color:'var(--muted)',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",fontSize:13,letterSpacing:2,textTransform:'uppercase',transition:'all 0.15s'}}>
+                      {showSaved ? "HIDE" : `SAVED BEATDOWNS (${savedBeatdowns.length})`}
+                    </button>
+                  )}
                 </div>
+                {showSaved && savedBeatdowns.length > 0 && (
+                  <div className="full-width" style={{display:'flex',flexDirection:'column',gap:6}}>
+                    {savedBeatdowns.map(b => (
+                      <div key={b.id} style={{display:'flex',alignItems:'center',gap:8,background:'var(--dark)',border:'1px solid var(--border)',padding:'10px 12px',borderRadius:4}}>
+                        <div style={{flex:1,cursor:'pointer'}} onClick={() => loadBeatdown(b)}>
+                          <div style={{fontWeight:600,fontSize:14,color:'var(--text)'}}>{b.result?.theme || "Untitled"}</div>
+                          <div style={{fontSize:12,color:'var(--muted)'}}>{b.form?.ao || ""} · {b.form?.date || ""} · Q: {b.form?.q || ""}</div>
+                        </div>
+                        <button onClick={() => deleteBeatdown(b.id)} style={{background:'none',border:'none',color:'var(--muted)',cursor:'pointer',fontSize:16,padding:'4px 8px'}} title="Delete">x</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1729,8 +1822,9 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                   <div style={{flex:1}}>
                     {form.location && <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase',marginBottom:6}}>📍 {form.location}</div>}
                     <div className="weinke-actions" style={{marginTop:0}}>
-                      <button className="btn-pdf" onClick={downloadPdf}>📄 Download PDF</button>
-                      <button className="btn-pdf" onClick={downloadDocx}>📝 Download .docx</button>
+                      <button className="btn-pdf" onClick={downloadPdf}>📄 PDF</button>
+                      <button className="btn-pdf" onClick={downloadDocx}>📝 .docx</button>
+                      <button className="btn-pdf" onClick={saveBeatdown} style={{borderColor:'var(--success)',color:'var(--success)'}}>💾 Save</button>
                     </div>
                   </div>
                   {(form.location || aos.find(a => (a.locationName || a.name) === form.ao)?.lat) && (
@@ -1742,7 +1836,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
 
                 {/* Tabs */}
                 <div className="tabs">
-                  {[["weinke","🪖 Weinke"],["eval","📊 Evaluation"],["playlist","🎵 Playlist"],["preblast","📣 Pre-Blast"]].map(([id,label]) => (
+                  {[["weinke","🪖 Weinke"],["eval","📊 Evaluation"],["playlist","🎵 Playlist"],["preblast","📣 Pre-Blast"],["backblast","📋 Backblast"]].map(([id,label]) => (
                     <button key={id} className={`tab ${activeTab===id?"active":""}`} onClick={() => setActiveTab(id)}>{label}</button>
                   ))}
                 </div>
@@ -2005,6 +2099,73 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                         {copied ? "✓ COPIED" : "COPY"}
                       </button>
                       {result.preBlast}
+                    </div>
+                  </div>
+                )}
+
+                {/* BACKBLAST TAB */}
+                {activeTab === "backblast" && (
+                  <div style={{marginTop:24,display:'flex',flexDirection:'column',gap:20}}>
+                    <div className="section-label">Post-Workout Backblast</div>
+
+                    {/* PAX Attendance */}
+                    <div>
+                      <label style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:2,color:'var(--gold)',textTransform:'uppercase',display:'block',marginBottom:6}}>PAX (comma-separated)</label>
+                      <textarea style={{width:'100%',minHeight:60,background:'var(--dark)',border:'1px solid var(--border)',borderRadius:4,padding:12,color:'var(--text)',fontSize:14,fontFamily:"'Barlow',sans-serif",resize:'vertical'}}
+                        placeholder="e.g. Button, Woody, Sweep3r, Zima..."
+                        value={bbPax} onChange={e => setBbPax(e.target.value)} />
+                    </div>
+
+                    {/* Pre-Ruck/Run */}
+                    <div>
+                      <label style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:2,color:'var(--gold)',textTransform:'uppercase',display:'block',marginBottom:6}}>Pre-Ruck / Pre-Run Participants</label>
+                      <textarea style={{width:'100%',minHeight:40,background:'var(--dark)',border:'1px solid var(--border)',borderRadius:4,padding:12,color:'var(--text)',fontSize:14,fontFamily:"'Barlow',sans-serif",resize:'vertical'}}
+                        placeholder="e.g. Button, Woody (optional)"
+                        value={bbPreRuck} onChange={e => setBbPreRuck(e.target.value)} />
+                    </div>
+
+                    {/* Exercise Checklist */}
+                    <div>
+                      <label style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:2,color:'var(--gold)',textTransform:'uppercase',display:'block',marginBottom:6}}>Exercises — uncheck what was skipped</label>
+                      {result.blocks?.map((block, bi) => (
+                        <div key={bi} style={{marginBottom:12}}>
+                          <div style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,letterSpacing:2,color:'var(--steel)',padding:'6px 0',borderBottom:'1px solid var(--border)'}}>{block.name}</div>
+                          {block.exercises?.map((ex, ei) => {
+                            const idx = result.blocks.slice(0, bi).reduce((a, b) => a + (b.exercises?.length || 0), 0) + ei;
+                            const checked = bbExDone[idx] !== false;
+                            return (
+                              <label key={idx} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 4px',cursor:'pointer',borderBottom:'1px solid rgba(255,255,255,0.03)'}}>
+                                <input type="checkbox" checked={checked} onChange={() => setBbExDone(prev => ({...prev, [idx]: !checked}))}
+                                  style={{width:18,height:18,accentColor:'var(--gold)',cursor:'pointer'}} />
+                                <span style={{flex:1,fontSize:14,color: checked ? 'var(--text)' : 'var(--muted)',textDecoration: checked ? 'none' : 'line-through'}}>{ex.name}</span>
+                                <span style={{fontSize:12,color:'var(--muted)',fontFamily:"'Barlow Condensed',sans-serif"}}>{ex.reps}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                      <label style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:2,color:'var(--gold)',textTransform:'uppercase',display:'block',marginBottom:6}}>COT / Notes</label>
+                      <textarea style={{width:'100%',minHeight:80,background:'var(--dark)',border:'1px solid var(--border)',borderRadius:4,padding:12,color:'var(--text)',fontSize:14,fontFamily:"'Barlow',sans-serif",resize:'vertical'}}
+                        placeholder="Closing message, shout-outs, announcements..."
+                        value={bbNotes} onChange={e => setBbNotes(e.target.value)} />
+                    </div>
+
+                    {/* Preview + Copy */}
+                    <div>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                        <label style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:2,color:'var(--gold)',textTransform:'uppercase'}}>Backblast Preview</label>
+                        <button onClick={copyBackblast}
+                          style={{background: bbCopied ? 'var(--success)' : 'var(--dark)',border:`1px solid ${bbCopied ? 'var(--success)' : 'var(--border)'}`,color: bbCopied ? 'white' : 'var(--muted)',fontSize:11,letterSpacing:1,padding:'4px 12px',cursor:'pointer',fontFamily:"'Barlow Condensed',sans-serif",textTransform:'uppercase',transition:'all 0.2s'}}>
+                          {bbCopied ? "COPIED" : "COPY BACKBLAST"}
+                        </button>
+                      </div>
+                      <div style={{background:'var(--dark)',border:'1px solid var(--border)',borderLeft:'3px solid var(--gold)',padding:16,whiteSpace:'pre-wrap',fontSize:13,lineHeight:1.7,color:'var(--text)',fontFamily:"'Barlow',sans-serif",maxHeight:400,overflow:'auto'}}>
+                        {generateBackblast()}
+                      </div>
                     </div>
                   </div>
                 )}
