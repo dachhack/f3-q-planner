@@ -2441,7 +2441,8 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
               </div>
             </div>
             <div style={{marginTop:20,paddingTop:16,borderTop:'1px solid var(--border)',fontSize:12,color:'var(--muted)',fontStyle:'italic',textAlign:'center'}}>
-              Aye! 🪖
+              Thanks to Buckshot, Tastycake, and the men of F3 Badapple for helping get this silly thing working.
+              <div style={{marginTop:8}}>Aye! 🪖</div>
             </div>
           </div>
         </div>
