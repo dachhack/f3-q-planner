@@ -1593,12 +1593,24 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
       const rows = result.paceGuide.map(row =>
         new TableRow({
           children: [
-            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: row.segment, size: 20, font: "Arial" })] })], borders: noBorders, width: { size: 60, type: WidthType.PERCENTAGE } }),
-            new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: row.time, size: 20, bold: true, color: "C0392B", font: "Arial" })] })], borders: noBorders, width: { size: 40, type: WidthType.PERCENTAGE } }),
+            new TableCell({
+              children: [new Paragraph({ children: [new TextRun({ text: row.segment || "", size: 20, font: "Arial" })] })],
+              borders: noBorders,
+              width: { size: 5400, type: WidthType.DXA },
+            }),
+            new TableCell({
+              children: [new Paragraph({ children: [new TextRun({ text: row.time || "", size: 20, bold: true, color: "C0392B", font: "Arial" })] })],
+              borders: noBorders,
+              width: { size: 3600, type: WidthType.DXA },
+            }),
           ],
         })
       );
-      sections.push(new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }));
+      sections.push(new Table({
+        rows,
+        width: { size: 9000, type: WidthType.DXA },
+        columnWidths: [5400, 3600],
+      }));
     }
 
     // Closing Messages
