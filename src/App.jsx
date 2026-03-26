@@ -695,14 +695,17 @@ const STYLES = `
   }
   .weinke-actions {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     margin-bottom: 20px;
+    flex-wrap: wrap;
   }
 
   @media (max-width: 700px) {
     .cot-options { grid-template-columns: 1fr; }
     .weinke-header { flex-direction: column; gap: 16px; }
     .weinke-meta { flex-wrap: wrap; }
+    .actions-map-row { flex-direction: column !important; }
+    .output-map-wrap { width: 100% !important; height: 160px !important; }
   }
 
   @media print {
@@ -1965,7 +1968,7 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
                 </div>
 
                 {/* Actions + Map */}
-                <div style={{display:'flex',alignItems:'stretch',gap:16,marginTop:16}}>
+                <div className="actions-map-row" style={{display:'flex',alignItems:'stretch',gap:16,marginTop:16}}>
                   <div style={{flex:1}}>
                     {form.location && <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase',marginBottom:6}}>📍 {form.location}</div>}
                     <div className="weinke-actions" style={{marginTop:0}}>
