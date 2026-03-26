@@ -179,6 +179,7 @@ const STYLES = `
   }
   .form-select { cursor: pointer; }
   .form-input::placeholder, .form-textarea::placeholder { color: #6B7588; }
+  .form-input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
   .form-textarea { resize: vertical; min-height: 80px; }
 
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
