@@ -1431,24 +1431,35 @@ ${exerciseNames}
 Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `Focus on these genres: ${form.playlistGenres.join(", ")}.` : "Mix classic rock, 90s hip-hop, and hard-hitting anthems."} ${form.playlistDeepCuts ? "IMPORTANT: DEEP CUTS ONLY. Do NOT use obvious greatest hits or overplayed songs. Pick B-sides, album tracks, lesser-known tracks by well-known artists, or tracks by lesser-known artists in the genre. Surprise the PAX with songs they haven't heard at every workout. No 'Eye of the Tiger', no 'Thunderstruck', no 'Lose Yourself' — go deeper." : "Vary the track selection — avoid defaulting to the same cliche workout songs every time (no Eye of the Tiger, no Thunderstruck unless the theme calls for it). Pick fresh tracks PAX will recognize but haven't heard at every beatdown."} Sequence to match the energy arc — warmup through finisher.`;
   };
 
-  // Fetch weather for AO location + date
+  // Fetch weather for AO location + date at beatdown time
   const fetchWeather = async () => {
     const aoObj = aos.find(a => (a.locationName || a.name) === form.ao);
     const lat = aoObj?.lat;
     const lng = aoObj?.lon || aoObj?.lng;
     if (!lat || !lng || !form.date) return null;
     try {
-      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weathercode,sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&start_date=${form.date}&end_date=${form.date}`);
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,apparent_temperature,precipitation_probability,weathercode,windspeed_10m,relative_humidity_2m&daily=sunrise,sunset&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&start_date=${form.date}&end_date=${form.date}`);
       const data = await res.json();
-      if (!data.daily) return null;
+      if (!data.hourly) return null;
+      // Parse start time to find the right hour (e.g. "5:30 AM" → 5)
+      const timeStr = (form.time || "5:30 AM").toUpperCase();
+      const match = timeStr.match(/(\d+)/);
+      let hour = match ? parseInt(match[1]) : 5;
+      if (timeStr.includes("PM") && hour !== 12) hour += 12;
+      if (timeStr.includes("AM") && hour === 12) hour = 0;
+      // Clamp to available hours
+      const idx = Math.min(Math.max(hour, 0), (data.hourly.time?.length || 1) - 1);
       const codes = {0:"Clear",1:"Mostly Clear",2:"Partly Cloudy",3:"Overcast",45:"Foggy",48:"Foggy",51:"Light Drizzle",53:"Drizzle",55:"Heavy Drizzle",61:"Light Rain",63:"Rain",65:"Heavy Rain",71:"Light Snow",73:"Snow",75:"Heavy Snow",80:"Rain Showers",81:"Rain Showers",82:"Heavy Showers",95:"Thunderstorm",96:"Thunderstorm + Hail",99:"Thunderstorm + Hail"};
       return {
-        high: Math.round(data.daily.temperature_2m_max[0]),
-        low: Math.round(data.daily.temperature_2m_min[0]),
-        precip: data.daily.precipitation_probability_max[0],
-        condition: codes[data.daily.weathercode[0]] || "Unknown",
-        sunrise: data.daily.sunrise?.[0]?.split("T")[1] || "",
-        sunset: data.daily.sunset?.[0]?.split("T")[1] || "",
+        temp: Math.round(data.hourly.temperature_2m[idx]),
+        feelsLike: Math.round(data.hourly.apparent_temperature[idx]),
+        precip: data.hourly.precipitation_probability[idx],
+        condition: codes[data.hourly.weathercode[idx]] || "Unknown",
+        wind: Math.round(data.hourly.windspeed_10m[idx]),
+        humidity: data.hourly.relative_humidity_2m[idx],
+        sunrise: data.daily?.sunrise?.[0]?.split("T")[1] || "",
+        sunset: data.daily?.sunset?.[0]?.split("T")[1] || "",
+        hour: `${hour}:00`,
       };
     } catch { return null; }
   };
@@ -1465,7 +1476,7 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
     const wx = await fetchWeather();
     setWeather(wx);
     try {
-      const prompt = buildPrompt() + (wx ? `\n\nWeather forecast for ${form.date}: ${wx.condition}, High ${wx.high}°F / Low ${wx.low}°F, ${wx.precip}% chance of rain. Sunrise ${wx.sunrise}. Consider weather when planning — if hot (>85°F) mention hydration, if cold (<40°F) extend warmup, if rainy adjust for wet conditions.` : "");
+      const prompt = buildPrompt() + (wx ? `\n\nWeather at beatdown time (${form.time}): ${wx.condition}, ${wx.temp}°F (feels like ${wx.feelsLike}°F), wind ${wx.wind} mph, humidity ${wx.humidity}%, ${wx.precip}% chance of rain. Sunrise ${wx.sunrise}. Consider weather when planning — if hot (>85°F) mention hydration, if cold (<40°F) extend warmup, if rainy adjust for wet/slippery conditions.` : "");
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -2020,12 +2031,16 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
                   <div style={{display:'flex',gap:16,padding:'10px 16px',background:'var(--dark)',border:'1px solid var(--border)',marginTop:8,borderRadius:4,alignItems:'center',flexWrap:'wrap'}}>
                     <div style={{fontSize:20}}>{weather.condition.includes("Rain") || weather.condition.includes("Drizzle") || weather.condition.includes("Shower") ? "🌧" : weather.condition.includes("Snow") ? "❄️" : weather.condition.includes("Thunder") ? "⛈" : weather.condition.includes("Cloud") || weather.condition.includes("Overcast") ? "☁️" : weather.condition.includes("Fog") ? "🌫" : "☀️"}</div>
                     <div>
-                      <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Forecast</div>
+                      <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>At {form.time}</div>
                       <div style={{fontSize:14,color:'var(--text)',fontWeight:600}}>{weather.condition}</div>
                     </div>
                     <div>
                       <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Temp</div>
-                      <div style={{fontSize:14,color:'var(--text)',fontWeight:600}}>{weather.low}° / {weather.high}°F</div>
+                      <div style={{fontSize:14,color:'var(--text)',fontWeight:600}}>{weather.temp}°F <span style={{fontSize:11,color:'var(--muted)',fontWeight:400}}>feels {weather.feelsLike}°</span></div>
+                    </div>
+                    <div>
+                      <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Wind</div>
+                      <div style={{fontSize:14,color:'var(--text)',fontWeight:600}}>{weather.wind} mph</div>
                     </div>
                     {weather.precip > 0 && (
                       <div>
