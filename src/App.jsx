@@ -731,7 +731,8 @@ const STYLES = `
 export default function F3QPlanner() {
   const [form, setForm] = useState({
     q: "", ao: "", region: "", location: "", date: "", time: "5:30 AM",
-    theme: "", equipment: [], terrain: [], formats: [], duration: "45", complexity: 3, difficulty: 3
+    theme: "", equipment: [], terrain: [], formats: [], duration: "45", complexity: 3, difficulty: 3,
+    playlistGenres: [], playlistDeepCuts: false
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -1414,7 +1415,7 @@ export default function F3QPlanner() {
 Use REAL F3 exercise names from the Exicon when possible. Here are exercises to draw from:
 ${exerciseNames}
 
-Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and hard-hitting anthems. Sequence to match the energy arc — warmup through finisher.`;
+Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `Focus on these genres: ${form.playlistGenres.join(", ")}.` : "Mix classic rock, 90s hip-hop, and hard-hitting anthems."} ${form.playlistDeepCuts ? "IMPORTANT: DEEP CUTS ONLY. Do NOT use obvious greatest hits or overplayed songs. Pick B-sides, album tracks, lesser-known tracks by well-known artists, or tracks by lesser-known artists in the genre. Surprise the PAX with songs they haven't heard at every workout. No 'Eye of the Tiger', no 'Thunderstruck', no 'Lose Yourself' — go deeper." : "Use well-known tracks that PAX will recognize."} Sequence to match the energy arc — warmup through finisher. NEVER repeat an artist across the playlist. Every track should be a different artist.`;
   };
 
   const generate = async () => {
@@ -1855,6 +1856,22 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                   </div>
                   <div style={{fontSize:12,color:'var(--muted)',marginTop:6,fontStyle:'italic'}}>
                     {({1:"Easy — light reps, low intensity, FNG-friendly",2:"Moderate — standard reps, steady pace",3:"Challenging — higher reps, faster pace",4:"Hard — heavy reps, minimal rest, PAX will feel it",5:"Brutal — max reps, burpee-heavy, coupon-loaded punishment"})[form.difficulty]}
+                  </div>
+                </div>
+                <div className="form-group full-width">
+                  <label className="form-label">Playlist Vibe</label>
+                  <div className="chips">
+                    {["Classic Rock","90s Hip-Hop","Hard Rock / Metal","EDM / Electronic","Country","Pop Anthems","Punk","R&B / Soul","Indie / Alt","Latin / Reggaeton","Movie Soundtracks"].map(g => (
+                      <div key={g} className={`chip ${form.playlistGenres.includes(g) ? "active" : ""}`}
+                        onClick={() => toggleChip("playlistGenres", g)}>{g}</div>
+                    ))}
+                  </div>
+                  <div style={{marginTop:8,display:'flex',alignItems:'center',gap:10}}>
+                    <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:13,color: form.playlistDeepCuts ? 'var(--gold)' : 'var(--muted)',fontFamily:"'Barlow',sans-serif"}}>
+                      <input type="checkbox" checked={form.playlistDeepCuts} onChange={e => setForm(f => ({...f, playlistDeepCuts: e.target.checked}))}
+                        style={{width:16,height:16,accentColor:'var(--gold)',cursor:'pointer'}} />
+                      Deep Cuts Mode — skip the obvious hits, find hidden gems and B-sides
+                    </label>
                   </div>
                 </div>
                 <div className="form-group full-width">
