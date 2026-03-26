@@ -817,12 +817,15 @@ export default function F3QPlanner() {
     if (input) addToRoster(input);
   };
 
+  const [isSaved, setIsSaved] = useState(false);
+
   const saveBeatdown = () => {
     if (!result) return;
     const entry = { id: Date.now(), form: {...form}, result, savedAt: new Date().toISOString() };
     const updated = [entry, ...savedBeatdowns].slice(0, 50);
     setSavedBeatdowns(updated);
     localStorage.setItem("f3_saved_beatdowns", JSON.stringify(updated));
+    setIsSaved(true);
   };
 
   const loadBeatdown = (entry) => {
@@ -1418,6 +1421,7 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
     // Auto-add Q name to roster
     if (form.q) addToRoster(form.q);
     setResult(null);
+    setIsSaved(false);
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -1916,7 +1920,12 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                 {/* Weinke Header */}
                 <div className="weinke-header">
                   <div>
-                    <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:3,color:"var(--muted)",marginBottom:4}}>F3 WEINKE</div>
+                    <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:3,color:"var(--muted)",marginBottom:4,display:'flex',alignItems:'center',gap:8}}>
+                      F3 WEINKE
+                      {isSaved
+                        ? <span style={{fontSize:10,color:'var(--success)',letterSpacing:1}}>SAVED</span>
+                        : <span style={{fontSize:10,color:'var(--red)',letterSpacing:1}}>UNSAVED</span>}
+                    </div>
                     <div className="weinke-title">🪖 {result.theme}</div>
                     <div style={{fontFamily:"'Barlow',sans-serif",fontSize:14,color:"var(--muted)",marginTop:6,fontStyle:"italic"}}>{result.tagline}</div>
                   </div>
@@ -1942,7 +1951,10 @@ Playlist: Build for men in their 40s & 50s. Mix classic rock, 90s hip-hop, and h
                     <div className="weinke-actions" style={{marginTop:0}}>
                       <button className="btn-pdf" onClick={downloadPdf}>📄 PDF</button>
                       <button className="btn-pdf" onClick={downloadDocx}>📝 .docx</button>
-                      <button className="btn-pdf" onClick={saveBeatdown} style={{borderColor:'var(--success)',color:'var(--success)'}}>💾 Save</button>
+                      <button className="btn-pdf" onClick={saveBeatdown} disabled={isSaved}
+                        style={{borderColor: isSaved ? 'var(--success)' : 'var(--border)', color: isSaved ? 'var(--success)' : 'var(--muted)', background: isSaved ? 'rgba(46,204,113,0.1)' : 'transparent'}}>
+                        {isSaved ? "✓ Saved" : "💾 Save"}
+                      </button>
                       <button className="btn-pdf" onClick={shareBeatdown} style={{borderColor:'var(--steel)',color:'var(--steel)'}}>{shareCopied ? "✓ Link Copied" : "🔗 Share"}</button>
                     </div>
                   </div>
