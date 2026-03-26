@@ -711,24 +711,31 @@ const STYLES = `
   }
 
   @media print {
-    body { background: white !important; color: #111 !important; }
+    body { background: white !important; color: #000 !important; font-size: 12px !important; }
     .app { background: white !important; background-image: none !important; }
-    .header, .form-panel, .tabs, .loading, .empty-state, .btn-pdf, .weinke-actions, .copy-btn { display: none !important; }
-    .main { display: block !important; padding: 0 !important; }
+    .header, .form-panel, .tabs, .loading, .empty-state, .btn-pdf, .weinke-actions, .copy-btn, .info-btn, .output-map-wrap, .actions-map-row { display: none !important; }
+    .main { display: block !important; padding: 0 !important; max-width: 100% !important; }
     .output { padding: 0 !important; }
-    .weinke-header { background: white !important; border-color: #333 !important; }
-    .weinke-title { color: #111 !important; }
-    .block { background: white !important; border-color: #ccc !important; break-inside: avoid; }
-    .block-header { background: #f0f0f0 !important; }
-    .block-name, .block-time { color: #111 !important; }
-    .exercise-link { color: #111 !important; border-bottom: none !important; }
-    .exercise-reps { color: #333 !important; }
-    .ic-badge, .oyo-badge { border-color: #666 !important; color: #666 !important; background: transparent !important; }
-    .pace-table th { background: #333 !important; }
-    .cot-card { background: #f8f8f8 !important; border-color: #ccc !important; }
-    .cot-label, .cot-text { color: #111 !important; }
-    .section-label { color: #111 !important; }
-    .weinke-meta-label, .weinke-meta-value { color: #333 !important; }
+    .weinke-header { background: white !important; border: 2px solid #000 !important; padding: 16px !important; }
+    .weinke-title { color: #000 !important; font-size: 24px !important; }
+    .weinke-meta-label { color: #555 !important; font-weight: 700 !important; }
+    .weinke-meta-value { color: #000 !important; font-weight: 700 !important; }
+    .block { background: white !important; border: 1px solid #000 !important; break-inside: avoid; margin-bottom: 8px !important; }
+    .block-header { background: #eee !important; }
+    .block-name { color: #000 !important; font-weight: 700 !important; }
+    .block-time { color: #000 !important; font-weight: 700 !important; }
+    .block-theme { color: #333 !important; }
+    .exercise-name { color: #000 !important; font-weight: 600 !important; }
+    .exercise-link { color: #000 !important; border-bottom: none !important; text-decoration: none !important; }
+    .exercise-reps { color: #000 !important; font-weight: 600 !important; }
+    .exercise-note { color: #333 !important; }
+    .ic-badge, .oyo-badge { border-color: #000 !important; color: #000 !important; background: transparent !important; font-weight: 700 !important; }
+    .pace-table th { background: #000 !important; color: white !important; }
+    .pace-table td { color: #000 !important; border-bottom: 1px solid #ccc !important; }
+    .cot-card { background: #f5f5f5 !important; border: 1px solid #000 !important; }
+    .cot-label { color: #000 !important; font-weight: 700 !important; }
+    .cot-text { color: #111 !important; }
+    .section-label { color: #000 !important; font-weight: 700 !important; }
     .playlist-section, .preblast-section { display: none !important; }
   }
 `;
