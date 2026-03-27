@@ -2628,22 +2628,16 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
                 <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Powered by</div>
                 <div style={{color:'var(--text)'}}>Claude (Anthropic) + F3 Nation API</div>
               </div>
-              {(beatdownCount > 0 || globalCount > 0) && (
-                <div style={{display:'flex',gap:24}}>
-                  {beatdownCount > 0 && (
-                    <div>
-                      <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Your Beatdowns</div>
-                      <div style={{color:'var(--gold)',fontFamily:"'Bebas Neue',sans-serif",fontSize:22}}>{beatdownCount}</div>
-                    </div>
-                  )}
-                  {globalCount > 0 && (
-                    <div>
-                      <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>By All PAX</div>
-                      <div style={{color:'var(--gold)',fontFamily:"'Bebas Neue',sans-serif",fontSize:22}}>{globalCount}</div>
-                    </div>
-                  )}
+              <div style={{display:'flex',gap:24}}>
+                <div>
+                  <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Your Beatdowns</div>
+                  <div style={{color:'var(--gold)',fontFamily:"'Bebas Neue',sans-serif",fontSize:22}}>{beatdownCount}</div>
                 </div>
-              )}
+                <div>
+                  <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>By All PAX</div>
+                  <div style={{color:'var(--gold)',fontFamily:"'Bebas Neue',sans-serif",fontSize:22}}>{globalCount}</div>
+                </div>
+              </div>
             </div>
             <div style={{marginTop:20,paddingTop:16,borderTop:'1px solid var(--border)'}}>
               <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--gold)',textTransform:'uppercase',marginBottom:8}}>Recent Changes</div>
