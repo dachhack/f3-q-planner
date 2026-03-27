@@ -1338,18 +1338,41 @@ export default function F3QPlanner() {
       let seconds = 0;
       for (const ex of (block.exercises || [])) {
         const repsStr = (ex.reps || "").toLowerCase();
+        const nameStr = (ex.name || "").toLowerCase();
+        const noteStr = (ex.note || "").toLowerCase();
         const repMatch = repsStr.match(/(\d+)/);
         const reps = repMatch ? parseInt(repMatch[1]) : 10;
 
-        if (repsStr.includes("second") || repsStr.includes("sec")) {
-          seconds += reps; // already in seconds
+        // Check for compound/long exercises first
+        if (nameStr.includes("burpee mile") || noteStr.includes("burpee mile")) {
+          seconds += 25 * 60; // ~25 min
+        } else if (nameStr.includes("dora") || noteStr.includes("dora")) {
+          seconds += 18 * 60; // ~18 min
+        } else if ((nameStr.includes("11s") || nameStr.includes("7s") || nameStr.includes("9s")) && (noteStr.includes("run") || noteStr.includes("mosey"))) {
+          seconds += 14 * 60; // ~14 min
+        } else if (nameStr.includes("ring of fire") || noteStr.includes("ring of fire")) {
+          seconds += 9 * 60; // ~9 min
+        } else if (nameStr.includes("four corner") || noteStr.includes("four corner")) {
+          seconds += 10 * 60; // ~10 min
+        } else if (repsStr.includes("mile") || noteStr.includes("mile")) {
+          seconds += 10 * 60; // ~10 min for a mile
+        } else if (repsStr.includes("lap") || noteStr.includes("lap")) {
+          seconds += 3 * 60; // ~3 min per lap
+        } else if (repsStr.includes("second") || repsStr.includes("sec")) {
+          seconds += reps;
         } else if (repsStr.includes("minute") || repsStr.includes("min")) {
           seconds += reps * 60;
+        } else if (repsStr.includes("round")) {
+          seconds += reps * 90; // ~90 sec per round
+        } else if (nameStr.includes("burpee")) {
+          seconds += reps * 6 + 5; // burpees are ~6 sec each
+        } else if (nameStr.includes("run") || nameStr.includes("mosey") || nameStr.includes("sprint") || nameStr.includes("bear crawl")) {
+          seconds += Math.max(reps * 3, 120); // running exercises take at least 2 min
+        } else if (repsStr.includes("corner") || repsStr.includes("per corner")) {
+          seconds += reps * 60 * 4; // per-corner timing
         } else if (ex.cadence === "IC") {
-          // IC = counted reps, ~2 sec per rep (up + down) + 5 sec setup
           seconds += reps * 2 + 5;
         } else {
-          // OYO = individual pace, ~3 sec per rep + 5 sec setup
           seconds += reps * 3 + 5;
         }
         // Transition between exercises (varies by pace)

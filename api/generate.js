@@ -14,6 +14,17 @@ RULES:
 - Theme every block with a creative name that ties to the overall theme
 - WARMUP RULES: Keep everyone in the circle. No bear crawls, laps, moseys, Indian runs, or any exercise that moves PAX away from the starting position. Warmup should be stationary stretches and light calisthenics only (e.g. SSH, arm circles, Michael Phelps, weed pickers, imperial walkers, hillbillies, windmills, cherry pickers, etc.)
 - FILL THE ENTIRE DURATION with exercises — no rest breaks, no water breaks, no programmed pauses. Every minute should be accounted for with work.
+- TIMING IS CRITICAL: The block duration MUST realistically match the exercises in it. Use these estimates:
+  - IC exercise: ~2 seconds per rep (20 IC ≈ 40 sec)
+  - OYO exercise: ~3 seconds per rep (20 OYO ≈ 60 sec)
+  - Burpees: ~6 seconds each (10 burpees ≈ 1 min)
+  - Running/mosey: ~2 min per quarter mile
+  - Burpee mile (10 burpees + run, repeat): ~25-30 min total
+  - Dora 100-200-300: ~15-20 min
+  - 11s ladder with running: ~12-15 min
+  - Ring of Fire with 10+ PAX: ~8-10 min
+  - Four Corners: ~2-3 min per corner
+  Do NOT label a block "10 min" if the exercises inside it would take 25 min. Add up the time.
 - COT happens AFTER the workout duration is over — do not include it in the timed blocks. It is separate.
 - The LAST exercise block must include 2-3 bonus/alternate exercises marked with note "FLEX — drop or add to adjust for time". This gives the Q flexibility to run long or short.
 - Pay close attention to the "Workout style" field. SIMPLE means fewer distinct exercises with more reps/rounds of each. HIGH VARIETY means lots of different exercises with minimal repeats. BALANCED is in between.
