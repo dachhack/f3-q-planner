@@ -757,6 +757,12 @@ export default function F3QPlanner() {
   const [result, setResult] = useState(null);
   const [weather, setWeather] = useState(null);
   const [beatdownCount, setBeatdownCount] = useState(() => parseInt(localStorage.getItem("f3_beatdown_count") || "0"));
+  const [globalCount, setGlobalCount] = useState(0);
+
+  // Fetch global beatdown count on mount
+  useEffect(() => {
+    fetch("/api/counter").then(r => r.json()).then(d => setGlobalCount(d.count || 0)).catch(() => {});
+  }, []);
   const [activeTab, setActiveTab] = useState("weinke");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(null);
@@ -1571,10 +1577,11 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
               const parsed = JSON.parse(clean);
               setResult(parsed);
               setActiveTab("weinke");
-              // Increment beatdown counter
+              // Increment beatdown counters
               const count = parseInt(localStorage.getItem("f3_beatdown_count") || "0") + 1;
               localStorage.setItem("f3_beatdown_count", String(count));
               setBeatdownCount(count);
+              fetch("/api/counter", { method: "POST" }).then(r => r.json()).then(d => setGlobalCount(d.count || 0)).catch(() => {});
             }
           } catch (_) {
             // skip unparseable lines
@@ -2621,10 +2628,20 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
                 <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Powered by</div>
                 <div style={{color:'var(--text)'}}>Claude (Anthropic) + F3 Nation API</div>
               </div>
-              {beatdownCount > 0 && (
-                <div>
-                  <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Beatdowns Created</div>
-                  <div style={{color:'var(--gold)',fontFamily:"'Bebas Neue',sans-serif",fontSize:22}}>{beatdownCount}</div>
+              {(beatdownCount > 0 || globalCount > 0) && (
+                <div style={{display:'flex',gap:24}}>
+                  {beatdownCount > 0 && (
+                    <div>
+                      <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Your Beatdowns</div>
+                      <div style={{color:'var(--gold)',fontFamily:"'Bebas Neue',sans-serif",fontSize:22}}>{beatdownCount}</div>
+                    </div>
+                  )}
+                  {globalCount > 0 && (
+                    <div>
+                      <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>By All PAX</div>
+                      <div style={{color:'var(--gold)',fontFamily:"'Bebas Neue',sans-serif",fontSize:22}}>{globalCount}</div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
