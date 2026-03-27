@@ -409,10 +409,17 @@ const STYLES = `
   .exercise-row {
     display: grid;
     grid-template-columns: 1fr auto;
-    gap: 16px;
+    gap: 8px 16px;
     padding: 10px 20px;
     border-bottom: 1px solid rgba(42,48,64,0.5);
-    align-items: center;
+    align-items: start;
+  }
+  @media (max-width: 600px) {
+    .exercise-row {
+      grid-template-columns: 1fr;
+      gap: 4px;
+    }
+    .exercise-reps { text-align: left !important; }
   }
   .exercise-row:last-child { border-bottom: none; }
   .exercise-row:nth-child(even) { background: rgba(255,255,255,0.015); }
@@ -1196,32 +1203,33 @@ export default function F3QPlanner() {
     return () => clearTimeout(timer);
   }, [result, aos, form.ao, form.location]);
 
-  // Render exercise notes — split numbered lists (e.g. "100 Merkins, 200 Squats") into line items
+  // Render exercise notes — split numbered lists and long descriptions
   const renderNote = (note) => {
     if (!note) return null;
-    // Check if note contains a numbered list pattern (e.g. "100 Exercise, 200 Exercise")
-    const items = note.split(/,\s*/).filter(Boolean);
-    const hasNumberedList = items.length >= 2 && items.every(item => /^\d+\s+/.test(item.trim()));
-    if (hasNumberedList) {
+    // Extract numbered items from anywhere in the note (e.g. "111 Merkins, 222 Squats, 333 LBCs")
+    const numberedItems = note.match(/\d+\s+[A-Z][^,;.]*/g);
+    if (numberedItems && numberedItems.length >= 2) {
+      // Split into description (non-numbered part) and the numbered list
+      const descParts = note.split(/\d+\s+[A-Z]/)[0].trim().replace(/[,;:]\s*$/, '');
       return (
         <div className="exercise-note">
-          {items.map((item, i) => (
+          {descParts && <div style={{marginBottom:4}}>{descParts}</div>}
+          {numberedItems.map((item, i) => (
             <div key={i} style={{paddingLeft:8,borderLeft:'2px solid var(--border)',marginTop: i > 0 ? 3 : 0}}>{item.trim()}</div>
           ))}
         </div>
       );
     }
-    // Also handle notes with periods or semicolons as separators
-    const parts = note.split(/[.;]\s*/).filter(s => s.trim().length > 0);
-    const hasMultiSentence = parts.length >= 3 && parts.every(p => /^\d+\s+/.test(p.trim()));
-    if (hasMultiSentence) {
-      return (
-        <div className="exercise-note">
-          {parts.map((item, i) => (
-            <div key={i} style={{paddingLeft:8,borderLeft:'2px solid var(--border)',marginTop: i > 0 ? 3 : 0}}>{item.trim()}</div>
-          ))}
-        </div>
-      );
+    // Long notes: split on sentence boundaries for readability
+    if (note.length > 100) {
+      const sentences = note.split(/\.\s+/).filter(s => s.trim().length > 0);
+      if (sentences.length >= 2) {
+        return (
+          <div className="exercise-note">
+            {sentences.map((s, i) => <div key={i} style={{marginTop: i > 0 ? 3 : 0}}>{s.trim()}{s.endsWith('.') ? '' : '.'}</div>)}
+          </div>
+        );
+      }
     }
     return <div className="exercise-note">{note}</div>;
   };
