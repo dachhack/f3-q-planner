@@ -1325,14 +1325,44 @@ export default function F3QPlanner() {
       groupCounts[group === "Other" ? otherLabel : group] = (groupCounts[group === "Other" ? otherLabel : group] || 0) + 1;
     }
 
-    // Duration parsing — try block durations, fall back to pace guide times or configured duration
+    // Duration estimate — calculate from actual exercises
+    // Parse block durations from AI output
     const blockDurations = r.blocks.map(b => {
       const match = (b.duration || "").match(/(\d+)/);
       return match ? parseInt(match[1]) : 0;
     });
-    let totalMinutes = blockDurations.reduce((a, b) => a + b, 0);
-    // If parsed duration seems too low, try pace guide end times
-    if (totalMinutes < 20 && r.paceGuide?.length > 0) {
+    const aiTotalMinutes = blockDurations.reduce((a, b) => a + b, 0);
+
+    // Estimate from exercises: ~30-45 sec per IC exercise, ~45-60 sec per OYO, transitions
+    const estimateBlockTime = (block) => {
+      let seconds = 0;
+      for (const ex of (block.exercises || [])) {
+        const repsStr = (ex.reps || "").toLowerCase();
+        const repMatch = repsStr.match(/(\d+)/);
+        const reps = repMatch ? parseInt(repMatch[1]) : 10;
+
+        if (repsStr.includes("second") || repsStr.includes("sec")) {
+          seconds += reps; // already in seconds
+        } else if (repsStr.includes("minute") || repsStr.includes("min")) {
+          seconds += reps * 60;
+        } else if (ex.cadence === "IC") {
+          // IC = counted reps, ~2 sec per rep (up + down) + 5 sec setup
+          seconds += reps * 2 + 5;
+        } else {
+          // OYO = individual pace, ~3 sec per rep + 5 sec setup
+          seconds += reps * 3 + 5;
+        }
+        // Transition between exercises
+        seconds += 10;
+      }
+      return Math.ceil(seconds / 60);
+    };
+
+    const estimatedMinutes = r.blocks.reduce((sum, b) => sum + estimateBlockTime(b), 0);
+    // Use the higher of AI estimate and exercise estimate, but cap at configured duration
+    let totalMinutes = Math.max(aiTotalMinutes, estimatedMinutes);
+    // If still seems off, try pace guide
+    if (totalMinutes < 15 && r.paceGuide?.length > 0) {
       const lastPace = r.paceGuide[r.paceGuide.length - 1];
       const endMatch = (lastPace?.time || "").match(/(\d+)(?::|\s*–\s*(\d+))/);
       if (endMatch) {
