@@ -743,7 +743,7 @@ const STYLES = `
 export default function F3QPlanner() {
   const [form, setForm] = useState({
     q: "", ao: "", region: "", location: "", date: "", time: "5:30 AM",
-    theme: "", equipment: [], terrain: [], formats: [], duration: "45", complexity: 3, difficulty: 3,
+    theme: "", equipment: [], terrain: [], formats: [], duration: "45", complexity: 3, difficulty: 3, pace: 3,
     playlistGenres: [], playlistDeepCuts: false
   });
   const [loading, setLoading] = useState(false);
@@ -1352,8 +1352,9 @@ export default function F3QPlanner() {
           // OYO = individual pace, ~3 sec per rep + 5 sec setup
           seconds += reps * 3 + 5;
         }
-        // Transition between exercises
-        seconds += 10;
+        // Transition between exercises (varies by pace)
+        const paceTransition = {1: 45, 2: 25, 3: 15, 4: 8, 5: 3};
+        seconds += paceTransition[form.pace] || 15;
       }
       return Math.ceil(seconds / 60);
     };
@@ -1453,6 +1454,7 @@ export default function F3QPlanner() {
 - Workout formats to include: ${form.formats.length ? form.formats.join(", ") : "Q's choice — pick what fits the theme"}
 - Exercise variety (${form.complexity}/5): ${form.complexity <= 1 ? "CRITICAL: MINIMAL variety. Use ONLY 3-4 distinct exercises for the ENTIRE workout. Repeat the same exercises every round/set. Do NOT introduce new exercises in each block — reuse the same ones. Example: Merkins, Squats, LBCs repeated across all blocks." : form.complexity === 2 ? "IMPORTANT: LOW variety. Use only 4-6 distinct exercises total across the whole workout. REPEAT exercises heavily across rounds and blocks. Do NOT use a different exercise for every line — reuse the same core exercises. Favor ladder formats, Doras, and rep-based circuits with the same few movements." : form.complexity === 3 ? "BALANCED — moderate variety, some repeats where it makes sense. Mix of familiar and fresh exercises." : form.complexity === 4 ? "HIGH VARIETY — use many different exercises. Minimize repeats. Each block should feature fresh movements." : "MAX VARIETY — every exercise is different. Zero repeats across the entire beatdown."}
 - Difficulty (${form.difficulty}/5): ${form.difficulty <= 1 ? "CRITICAL: EASY workout. Keep ALL reps at 10-12 IC or OYO. NO burpees. NO high-rep sets. Use light exercises (SSH, arm circles, light squats). Include generous transition time. This is for FNGs and recovery days." : form.difficulty === 2 ? "IMPORTANT: MODERATE workout. Keep reps at 15 max. Limit burpees to 1 set max. No sets above 20 reps. Use standard exercises at a comfortable pace. NO death-by or max-effort sets." : form.difficulty === 3 ? "CHALLENGING — reps around 15-20. Include some burpees and compound movements. Good pace but manageable." : form.difficulty === 4 ? "HARD — reps 20-25, minimal rest. Load up on coupons, burpees, and compound movements. PAX should be gassed." : "BRUTAL — reps 25-30+, burpee-heavy, coupon-loaded. Every block punishing. No mercy."}
+- Pace (${form.pace}/5): ${form.pace <= 1 ? "SLOW pace. Include 30-60 second rest between exercises. Long transitions (1-2 min) between blocks. Add 'recover' or 'shake it out' cues. Use fewer exercises per block with more time on each." : form.pace === 2 ? "RELAXED pace. Include 15-30 second rest between exercises. Comfortable transitions. No rushing — let PAX catch their breath." : form.pace === 3 ? "STANDARD pace. Brief 10-15 second transitions. Keep it moving but don't sprint between exercises. Steady flow." : form.pace === 4 ? "UP-TEMPO pace. Minimal rest (5-10 sec) between exercises. Quick transitions. More exercises per block, shorter time on each. Keep the pressure on." : "SPRINT pace. NO rest between exercises. Rapid-fire back-to-back. Pack maximum exercises into each block. Non-stop movement from start to finish. Use formats like AMRAP, Tabata, and EMOM to enforce pace."}
 - Extra notes: ${form.notes || "none"}
 
 Use REAL F3 exercise names from the Exicon when possible. Here are exercises to draw from:
@@ -1948,6 +1950,29 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
                   </div>
                   <div style={{fontSize:12,color:'var(--muted)',marginTop:6,fontStyle:'italic'}}>
                     {({1:"Easy — light reps, low intensity, FNG-friendly",2:"Moderate — standard reps, steady pace",3:"Challenging — higher reps, faster pace",4:"Hard — heavy reps, minimal rest, PAX will feel it",5:"Brutal — max reps, burpee-heavy, coupon-loaded punishment"})[form.difficulty]}
+                  </div>
+                </div>
+                <div className="form-group full-width">
+                  <label className="form-label">Pace <span style={{color:'var(--steel)',fontWeight:700}}>{form.pace}</span></label>
+                  <div style={{display:'flex',alignItems:'center',gap:12}}>
+                    <span style={{fontSize:11,color:'var(--muted)',fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:1,whiteSpace:'nowrap'}}>SLOW</span>
+                    <div style={{display:'flex',gap:4,flex:1}}>
+                      {[1,2,3,4,5].map(n => (
+                        <div key={n} onClick={() => setForm(f => ({...f, pace: n}))}
+                          style={{flex:1,height:32,borderRadius:4,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
+                            background: n <= form.pace ? 'var(--steel)' : 'var(--panel)',
+                            color: n <= form.pace ? 'white' : 'var(--muted)',
+                            fontFamily:"'Bebas Neue',sans-serif",fontSize:16,
+                            border: `1px solid ${n <= form.pace ? 'var(--steel)' : 'var(--border)'}`,
+                            transition:'all 0.15s'}}>
+                          {n}
+                        </div>
+                      ))}
+                    </div>
+                    <span style={{fontSize:11,color:'var(--muted)',fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:1,whiteSpace:'nowrap'}}>FAST</span>
+                  </div>
+                  <div style={{fontSize:12,color:'var(--muted)',marginTop:6,fontStyle:'italic'}}>
+                    {({1:"Slow & steady — long rest between exercises, generous transitions, take your time",2:"Relaxed — comfortable pace, moderate rest, no rushing",3:"Standard — steady flow, brief transitions, keep it moving",4:"Up-tempo — quick transitions, short rest, maintain intensity",5:"Sprint — no rest, rapid-fire exercises, non-stop movement"})[form.pace]}
                   </div>
                 </div>
                 <div className="form-group full-width">
