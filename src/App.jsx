@@ -756,6 +756,7 @@ export default function F3QPlanner() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [weather, setWeather] = useState(null);
+  const [beatdownCount, setBeatdownCount] = useState(() => parseInt(localStorage.getItem("f3_beatdown_count") || "0"));
   const [activeTab, setActiveTab] = useState("weinke");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(null);
@@ -1570,6 +1571,10 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
               const parsed = JSON.parse(clean);
               setResult(parsed);
               setActiveTab("weinke");
+              // Increment beatdown counter
+              const count = parseInt(localStorage.getItem("f3_beatdown_count") || "0") + 1;
+              localStorage.setItem("f3_beatdown_count", String(count));
+              setBeatdownCount(count);
             }
           } catch (_) {
             // skip unparseable lines
@@ -2616,6 +2621,12 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
                 <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Powered by</div>
                 <div style={{color:'var(--text)'}}>Claude (Anthropic) + F3 Nation API</div>
               </div>
+              {beatdownCount > 0 && (
+                <div>
+                  <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--muted)',textTransform:'uppercase'}}>Beatdowns Created</div>
+                  <div style={{color:'var(--gold)',fontFamily:"'Bebas Neue',sans-serif",fontSize:22}}>{beatdownCount}</div>
+                </div>
+              )}
             </div>
             <div style={{marginTop:20,paddingTop:16,borderTop:'1px solid var(--border)'}}>
               <div style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:2,color:'var(--gold)',textTransform:'uppercase',marginBottom:8}}>Recent Changes</div>
