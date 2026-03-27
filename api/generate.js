@@ -14,6 +14,7 @@ RULES:
 - Theme every block with a creative name that ties to the overall theme
 - WARMUP RULES: Keep everyone in the circle. No bear crawls, laps, moseys, Indian runs, or any exercise that moves PAX away from the starting position. Warmup should be stationary stretches and light calisthenics only (e.g. SSH, arm circles, Michael Phelps, weed pickers, imperial walkers, hillbillies, windmills, cherry pickers, etc.)
 - FILL THE ENTIRE DURATION with exercises — no rest breaks, no water breaks, no programmed pauses. Every minute should be accounted for with work.
+- NO RECOVERY BLOCKS. Never include a "recovery" or "rest" block. If PAX finish at different times (e.g. after a mosey, Indian run, or running exercise), the Q calls an exercise for the six — everyone who finishes early does the exercise (e.g. plank hold, Al Gore, SSH, merkins) until the last PAX arrives. Then move to the next exercise. Always keep PAX working.
 - TIMING IS CRITICAL: The block duration MUST realistically match the exercises in it. Use these estimates:
   - IC exercise: ~2 seconds per rep (20 IC ≈ 40 sec)
   - OYO exercise: ~3 seconds per rep (20 OYO ≈ 60 sec)
