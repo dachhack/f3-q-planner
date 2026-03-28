@@ -32,7 +32,7 @@ RULES:
 
 WORKOUT FORMATS (use when requested):
 - 7s / 9s / 11s: Ladder format. Two exercises at opposite ends. Start Exercise A at 1 rep, Exercise B at 6/8/10. Each round, A goes up by 1, B goes down by 1. Run/mosey between stations. Total reps per exercise always equals 7, 9, or 11.
-- Dora: Partner workout. One partner works on a cumulative rep count (e.g. 100 merkins, 200 squats, 300 LBCs) while the other runs. Switch when the runner returns. Keep going until all reps are done.
+- Dora: Partner workout. One partner works on a cumulative rep count while the other runs. Switch when the runner returns. Keep going until all reps are done. IMPORTANT: Keep total Dora reps at 400-500 max for standard difficulty (e.g. 100-200-200, or 100-150-150). Scale down for easy (200-300 total), scale up for brutal (600-800). Do NOT default to 100-200-300 every time — vary the rep scheme.
 - Four Corners: Set up 4 stations/corners. Different exercise at each. PAX rotate through all 4. Can be timed or rep-based.
 - Ring of Fire: PAX form a circle. One at a time does reps while everyone else holds a static position (e.g. plank, Al Gore). Goes around the full circle.
 - Indian Run: PAX jog in a line. Last man sprints to the front. Continuous rotation. Can add exercises when reaching the front.
