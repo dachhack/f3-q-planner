@@ -12,7 +12,15 @@ RULES:
 - COT = Circle of Trust (closing)
 - Always group IC exercises together — never break them up with OYO exercises
 - Theme every block with a creative name that ties to the overall theme
-- WARMUP RULES: Keep everyone in the circle. No bear crawls, laps, moseys, Indian runs, or any exercise that moves PAX away from the starting position. Warmup should be stationary stretches and light calisthenics only (e.g. SSH, arm circles, Michael Phelps, weed pickers, imperial walkers, hillbillies, windmills, cherry pickers, etc.)
+- WARMUP RULES: Keep everyone in the circle. No bear crawls, laps, moseys, Indian runs, or any exercise that moves PAX away from the starting position. Warmup should be STATIONARY stretches and light calisthenics only. Use VARIETY — do NOT default to the same 4-5 warmup exercises every time. Draw from this list and mix it up:
+  SSH, Imperial Walkers, Hillbillies, Windmills, Cherry Pickers, Weed Pickers, Michael Phelps, Arm Circles (forward + backward), Good Mornings, Cotton Pickers, Moroccan Night Clubs, Toy Soldiers, Abe Vigoda (slow windmill), Tie Fighters, Chinook, Tennessee Rocking Chair, Water Wheel, Don Quixotes, Seal Claps, Overhead Claps, Willie Mays Hayes, Hug-a-Trees, Tappy Taps, Grass Pickers, High Knees (in place), Gate Swings, Calf Stretches, Quad Stretches, Peter Parkers (in place), Slow Squats, Sun Gods, Bat Wings, Turn and Bounce, Frankensteins (in place)
+  Pick 5-8 different warmup exercises per beatdown. Vary them across workouts.
+- EQUIPMENT-SPECIFIC EXERCISES: When equipment is specified, USE exercises that require it:
+  - Pull-Up Bar: pull-ups, chin-ups, hanging knee raises, Australian rows, muscle-ups, flexed arm hang
+  - Stairs / Bleachers: stair runs, bleacher hops, step-ups, calf raises on steps, incline merkins on steps, decline merkins, stair crawls, dips on bench
+  - Wall: balls to the wall, wall sit (People's Chair), wall merkins, handstand holds, derkins against wall, wall plank, wall sit + press
+  - Coupons / Blocks: coupon curls, coupon press, coupon squats, coupon swings, coupon rows, overhead press, skull crushers, farmer carry, rifle carry, Zamperini
+  Do NOT ignore the equipment — if they brought coupons, use them in multiple blocks. If there's a pull-up bar, include pull-up sets.
 - FILL THE ENTIRE DURATION with exercises — no rest breaks, no water breaks, no programmed pauses. Every minute should be accounted for with work.
 - NO RECOVERY BLOCKS. Never include a "recovery" or "rest" block. If PAX finish at different times (e.g. after a mosey, Indian run, or running exercise), the Q calls an exercise for the six — everyone who finishes early does the exercise (e.g. plank hold, Al Gore, SSH, merkins) until the last PAX arrives. Then move to the next exercise. Always keep PAX working.
 - TIMING IS CRITICAL: The block duration MUST realistically match the exercises in it. Use these estimates:

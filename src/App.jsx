@@ -1442,7 +1442,7 @@ export default function F3QPlanner() {
     };
   };
 
-  const equipment = ["Coupons / Blocks", "Bodyweight", "Resistance Bands", "Sandbags"];
+  const equipment = ["Coupons / Blocks", "Bodyweight", "Resistance Bands", "Sandbags", "Pull-Up Bar", "Stairs / Bleachers", "Wall"];
   const terrains  = ["Hill", "Open Field", "Parking Lot", "Track", "Flat Only"];
   const themes    = ["Military / Tactical", "Mental Health", "Movies / Pop Culture", "Sports", "Brotherhood", "Surprise Me"];
   const formats      = ["7s", "9s", "11s", "Dora", "Four Corners", "Ring of Fire", "Indian Run", "Partner Work", "Tabata", "AMRAP", "EMOM"];
@@ -1467,11 +1467,21 @@ export default function F3QPlanner() {
     if (form.equipment.some(e => e.toLowerCase().includes("bodyweight"))) relevantTags.push("Full Body");
     if (form.terrain.some(t => t.toLowerCase().includes("hill"))) relevantTags.push("Run", "Cardio");
 
+    // Also search descriptions for equipment-specific exercises
+    const equipKeywords = [];
+    if (form.equipment.some(e => e.toLowerCase().includes("pull"))) equipKeywords.push("pull-up", "pull up", "pullup", "chin-up", "chin up", "hanging");
+    if (form.equipment.some(e => e.toLowerCase().includes("stair") || e.toLowerCase().includes("bleacher"))) equipKeywords.push("stair", "step-up", "step up", "bleacher", "incline", "decline");
+    if (form.equipment.some(e => e.toLowerCase().includes("wall"))) equipKeywords.push("wall", "balls to the wall", "derkin", "handstand");
+
     let exercisePool = exicon;
-    if (relevantTags.length > 0) {
+    if (relevantTags.length > 0 || equipKeywords.length > 0) {
       const tagged = exicon.filter(e => e.tags.some(t => relevantTags.includes(t)));
+      const equipMatched = equipKeywords.length > 0 ? exicon.filter(e => {
+        const text = (e.name + " " + (e.desc || "")).toLowerCase();
+        return equipKeywords.some(k => text.includes(k));
+      }) : [];
       const untagged = exicon.filter(e => e.tags.length === 0);
-      exercisePool = [...tagged, ...untagged.slice(0, 50)];
+      exercisePool = [...new Map([...tagged, ...equipMatched, ...untagged.slice(0, 50)].map(e => [e.name, e])).values()];
     }
     // Limit to ~150 exercise names to keep prompt reasonable
     const exerciseNames = exercisePool.slice(0, 150).map(e => e.name).join(", ");
