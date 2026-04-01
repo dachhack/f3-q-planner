@@ -1024,6 +1024,9 @@ export default function F3QPlanner() {
     "Warming up the warmup for the warmup",
     "Parsing the difference between 'hard' and 'impossible'",
     "Asking ChatGPT... just kidding, this is Claude",
+    "Googling 'lightest cinder block'",
+    "Monkey Humpers again. This is starting to get weird.",
+    "Let's just skip straight to Coffeeteria",
   ];
 
   useEffect(() => {
