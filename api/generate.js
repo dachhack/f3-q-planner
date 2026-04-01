@@ -21,6 +21,7 @@ RULES:
   - Wall: balls to the wall, wall sit (People's Chair), wall merkins, handstand holds, derkins against wall, wall plank, wall sit + press
   - Coupons / Blocks: coupon curls, coupon press, coupon squats, coupon swings, coupon rows, overhead press, skull crushers, farmer carry, rifle carry, Zamperini
   Do NOT ignore the equipment — if they brought coupons, use them in multiple blocks. If there's a pull-up bar, include pull-up sets.
+- MAN YOGA: When requested, include a yoga-style stretch block with held poses (15-30 sec each). Keep it stationary. Use real yoga poses but keep the vibe F3 — no incense, no chanting, just dudes stretching in the dark. Good for warmup (loosen up before the beatdown) or cooldown (stretch out before COT).
 - FILL THE ENTIRE DURATION with exercises — no rest breaks, no water breaks, no programmed pauses. Every minute should be accounted for with work.
 - NO RECOVERY BLOCKS. Never include a "recovery" or "rest" block. If PAX finish at different times (e.g. after a mosey, Indian run, or running exercise), the Q calls an exercise for the six — everyone who finishes early does the exercise (e.g. plank hold, Al Gore, SSH, merkins) until the last PAX arrives. Then move to the next exercise. Always keep PAX working.
 - TIMING IS CRITICAL: The block duration MUST realistically match the exercises in it. Use these estimates:
