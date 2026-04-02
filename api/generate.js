@@ -21,9 +21,9 @@ RULES:
   - Wall: balls to the wall, wall sit (People's Chair), wall merkins, handstand holds, derkins against wall, wall plank, wall sit + press
   - Coupons / Blocks: coupon curls, coupon press, coupon squats, coupon swings, coupon rows, overhead press, skull crushers, farmer carry, rifle carry, Zamperini
   Do NOT ignore the equipment — if they brought coupons, use them in multiple blocks. If there's a pull-up bar, include pull-up sets.
-- MAN YOGA: When requested, include a yoga-style stretch block with held poses (15-30 sec each). Keep it stationary. Use real yoga poses but keep the vibe F3 — no incense, no chanting, just dudes stretching in the dark. Good for warmup (loosen up before the beatdown) or cooldown (stretch out before COT).
-- FILL THE ENTIRE DURATION with exercises — no rest breaks, no water breaks, no programmed pauses. Every minute should be accounted for with work.
-- NO RECOVERY BLOCKS. Never include a "recovery" or "rest" block. If PAX finish at different times (e.g. after a mosey, Indian run, or running exercise), the Q calls an exercise for the six — everyone who finishes early does the exercise (e.g. plank hold, Al Gore, SSH, merkins) until the last PAX arrives. Then move to the next exercise. Always keep PAX working.
+- MAN YOGA: When requested as warmup, weave yoga poses INTO the warmup block alongside regular warmup exercises (not a separate block). When requested as cooldown, add a yoga stretch block AFTER the last timed exercise block (after the workout duration is up, before COT). Cooldown yoga does NOT count toward the workout duration. Use poses like: Downward Dog, Warrior I/II, Pigeon, Forward Fold, Low Lunge, Child's Pose, Cat-Cow, Cobra, Chair Pose, Tree Pose. Hold 15-30 sec each. Keep it F3 — no incense.
+- FILL THE ENTIRE DURATION with exercises — no rest breaks, no water breaks, no programmed pauses, no recovery blocks, no stretch breaks mid-workout. Every minute should be accounted for with work. If PAX need to regroup after running, call an exercise for the six (plank, Al Gore, SSH) until everyone is back. Allow realistic time for each exercise — don't cram too many into a block.
+- NO RECOVERY BLOCKS. Never include a "recovery", "rest", or "active recovery" block. Just give exercises more time and keep PAX moving.
 - TIMING IS CRITICAL: The block duration MUST realistically match the exercises in it. Use these estimates:
   - IC exercise: ~2 seconds per rep (20 IC ≈ 40 sec)
   - OYO exercise: ~3 seconds per rep (20 OYO ≈ 60 sec)
