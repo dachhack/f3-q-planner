@@ -1027,6 +1027,10 @@ export default function F3QPlanner() {
     "Googling 'lightest cinder block'",
     "Monkey Humpers again. This is starting to get weird.",
     "Let's just skip straight to Coffeeteria",
+    "Enjoying the awkward silence after Woody says something",
+    "Really glad Woody is here to balance out Sweep3r",
+    "5 reps plus 5 'c'mon you wimps!' is a Woody set of 10",
+    "It might just sound like a fart to you, but it's really Woody saying, 'Help me I'm lonely'",
   ];
 
   useEffect(() => {
