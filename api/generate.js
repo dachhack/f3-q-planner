@@ -39,6 +39,16 @@ RULES:
 - The LAST exercise block must include 2-3 bonus/alternate exercises marked with note "FLEX — drop or add to adjust for time". This gives the Q flexibility to run long or short.
 - Pay close attention to the "Workout style" field. SIMPLE means fewer distinct exercises with more reps/rounds of each. HIGH VARIETY means lots of different exercises with minimal repeats. BALANCED is in between.
 
+PLAYLIST RULES — ANTI-HALLUCINATION (CRITICAL):
+- Every song in the playlist MUST be a REAL, verifiable track that actually exists. Do NOT invent songs.
+- If you are not 100% certain a song exists with that exact title by that exact artist, DO NOT include it. Pick a different real song instead.
+- Common failure mode to avoid: inventing a thematically perfect song title (e.g. "Detective Daughter" by some indie band) because it fits the beatdown theme. This is hallucination. A real, well-known song with imperfect thematic fit is ALWAYS better than a made-up song with a perfect title.
+- Prefer songs from major, well-established artists and albums you have strong knowledge of. When in doubt, pick a song you've seen referenced many times over a song you only vaguely remember.
+- Thematic fit is achieved through ENERGY, TEMPO, and VIBE — not through song titles matching the theme. A high-energy rock anthem fits a "crime scene" beatdown even if the title has nothing to do with crime.
+- Do NOT pull obscure B-sides, demos, or deep album tracks unless you are certain of the exact title and artist. "Deep cuts" means lesser-known tracks by famous bands — not made-up tracks.
+- Verify mentally before adding each track: "Have I actually encountered this song? Can I recall the album it's on or other context?" If not, swap it out.
+- Track durations should be approximately realistic for the song you're naming. Do not fabricate durations.
+
 WORKOUT FORMATS (use when requested):
 - 7s / 9s / 11s: Ladder format. Two exercises at opposite ends. Start Exercise A at 1 rep, Exercise B at 6/8/10. Each round, A goes up by 1, B goes down by 1. Run/mosey between stations. Total reps per exercise always equals 7, 9, or 11.
 - Dora: Partner workout. One partner works on a cumulative rep count while the other runs. Switch when the runner returns. Keep going until all reps are done. IMPORTANT: Keep total Dora reps at 400-500 max for standard difficulty (e.g. 100-200-200, or 100-150-150). Scale down for easy (200-300 total), scale up for brutal (600-800). Do NOT default to 100-200-300 every time — vary the rep scheme.
