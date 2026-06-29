@@ -150,7 +150,7 @@ Push to `main` → Vercel auto-deploys. Env var `ANTHROPIC_API_KEY` set in Verce
 ---
 
 ## Known issues / things to improve
-- No rate limiting — any visitor can trigger API calls
+- Rate limiting is IP-based (`api/generate.js`): 20 beatdowns/hour per IP + a 200/day global cap, backed by Upstash. Tune the constants at the top of the file. IP limits are imperfect (shared NATs, IP rotation) — add a captcha challenge if stronger protection is ever needed.
 - No download-as-Word-doc yet (was in original roadmap)
 - Mobile layout needs polish on the output tabs
 - No ability to save/share generated beatdowns

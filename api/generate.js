@@ -102,6 +102,60 @@ const F3_ALLOWED_PATHS = [
   'v1/map/location/locationIdToRegionNameLookup'
 ];
 
+// Rate limiting (backed by the same Upstash store as the counter)
+const PER_IP_LIMIT = 20;        // beatdowns per IP per hour
+const PER_IP_WINDOW = 3600;     // seconds (1 hour)
+const GLOBAL_DAILY_LIMIT = 200; // beatdowns per day across all visitors
+const GLOBAL_WINDOW = 86400;    // seconds (1 day)
+
+// Newline-terminated so the frontend's NDJSON stream reader parses it as a line.
+function ndjsonError(message, status) {
+  return new Response(JSON.stringify({ type: 'error', error: message }) + '\n', {
+    status,
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Access-Control-Allow-Origin': '*',
+    },
+  });
+}
+
+// Returns a 429 Response if the request should be blocked, otherwise null.
+// Fails open: if the store is unconfigured or unreachable, the app keeps working.
+async function checkRateLimit(req) {
+  const kvUrl = process.env.KV_REST_API_URL;
+  const kvToken = process.env.KV_REST_API_TOKEN;
+  if (!kvUrl || !kvToken) return null;
+
+  const ip = (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'unknown';
+  const now = Date.now();
+  const ipKey = `rl:ip:${ip}:${Math.floor(now / (PER_IP_WINDOW * 1000))}`;
+  const globalKey = `rl:global:${Math.floor(now / (GLOBAL_WINDOW * 1000))}`;
+
+  try {
+    const res = await fetch(`${kvUrl}/pipeline`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${kvToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify([
+        ['INCR', ipKey], ['EXPIRE', ipKey, PER_IP_WINDOW],
+        ['INCR', globalKey], ['EXPIRE', globalKey, GLOBAL_WINDOW],
+      ]),
+    });
+    const data = await res.json();
+    const ipCount = Number(data?.[0]?.result) || 0;
+    const globalCount = Number(data?.[2]?.result) || 0;
+
+    if (ipCount > PER_IP_LIMIT) {
+      return ndjsonError("Whoa, Q — that's a lot of beatdowns in a short window. Take a breather and try again in a bit.", 429);
+    }
+    if (globalCount > GLOBAL_DAILY_LIMIT) {
+      return ndjsonError("The Q Planner has hit its daily limit for everyone. Try again tomorrow — the PAX will keep.", 429);
+    }
+    return null;
+  } catch {
+    return null; // store unreachable — don't block legitimate Qs
+  }
+}
+
 export default async function handler(req) {
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -160,6 +214,10 @@ export default async function handler(req) {
     return new Response(JSON.stringify({ error: 'API key not configured' }), { status: 500 });
   }
 
+  // Block abusive traffic before it costs us an Anthropic call.
+  const limited = await checkRateLimit(req);
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const { prompt } = body;
@@ -182,10 +240,7 @@ export default async function handler(req) {
 
     if (!response.ok) {
       const errText = await response.text();
-      return new Response(JSON.stringify({ type: 'error', error: errText }), {
-        status: response.status,
-        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-      });
+      return ndjsonError(errText, response.status);
     }
 
     const reader = response.body.getReader();
@@ -248,9 +303,6 @@ export default async function handler(req) {
       }
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { 'Access-Control-Allow-Origin': '*' }
-    });
+    return ndjsonError(err.message || 'Something went wrong generating the beatdown.', 500);
   }
 }
