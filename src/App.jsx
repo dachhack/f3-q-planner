@@ -1583,26 +1583,35 @@ Playlist: Build for men in their 40s & 50s. ${form.playlistGenres.length > 0 ? `
 
         for (const line of lines) {
           if (!line.trim()) continue;
+          let msg;
           try {
-            const msg = JSON.parse(line);
-            if (msg.type === 'error') {
-              setError(msg.error || "Something went wrong generating the beatdown.");
+            msg = JSON.parse(line);
+          } catch (_) {
+            // skip unparseable NDJSON heartbeat/partial lines
+            continue;
+          }
+          if (msg.type === 'error') {
+            setError(msg.error || "Something went wrong generating the beatdown.");
+            setLoading(false);
+            return;
+          }
+          if (msg.type === 'done') {
+            const clean = msg.text.replace(/```json|```/g, "").trim();
+            let parsed;
+            try {
+              parsed = JSON.parse(clean);
+            } catch (_) {
+              setError("The beatdown came back incomplete — try generating again.");
               setLoading(false);
               return;
             }
-            if (msg.type === 'done') {
-              const clean = msg.text.replace(/```json|```/g, "").trim();
-              const parsed = JSON.parse(clean);
-              setResult(parsed);
-              setActiveTab("weinke");
-              // Increment beatdown counters
-              const count = parseInt(localStorage.getItem("f3_beatdown_count") || "0") + 1;
-              localStorage.setItem("f3_beatdown_count", String(count));
-              setBeatdownCount(count);
-              fetch("/api/counter", { method: "POST" }).then(r => r.json()).then(d => setGlobalCount(d.count || 0)).catch(() => {});
-            }
-          } catch (_) {
-            // skip unparseable lines
+            setResult(parsed);
+            setActiveTab("weinke");
+            // Increment beatdown counters
+            const count = parseInt(localStorage.getItem("f3_beatdown_count") || "0") + 1;
+            localStorage.setItem("f3_beatdown_count", String(count));
+            setBeatdownCount(count);
+            fetch("/api/counter", { method: "POST" }).then(r => r.json()).then(d => setGlobalCount(d.count || 0)).catch(() => {});
           }
         }
       }
